@@ -26,7 +26,7 @@ object BakaWindow: TBakaWindow
     Top = 5
     Width = 635
     Height = 300
-    ActivePage = SheetLog
+    ActivePage = SheetEditor
     Anchors = [akLeft, akTop, akRight, akBottom]
     Constraints.MinHeight = 300
     Constraints.MinWidth = 330
@@ -349,7 +349,7 @@ object BakaWindow: TBakaWindow
           Top = 20
           Width = 150
           Height = 25
-          Hint =
+          Hint = 
             'Forces Archive Compression. Archives with sound files with still' +
             ' be uncompressed.'
           TabStop = False
@@ -369,7 +369,7 @@ object BakaWindow: TBakaWindow
           Top = 45
           Width = 150
           Height = 25
-          Hint =
+          Hint = 
             'Files with identical binary data will share space in the archive' +
             '. Slower to pack, but saves space if duplicate files exist.'
           TabStop = False
@@ -389,7 +389,7 @@ object BakaWindow: TBakaWindow
           Top = 135
           Width = 160
           Height = 120
-          Hint =
+          Hint = 
             'Override archive or file flags with a hex value. Oblivion, Fallo' +
             'ut 3/NV and Skyrim LE archives only.'
           Anchors = [akLeft, akTop, akBottom]
@@ -409,7 +409,7 @@ object BakaWindow: TBakaWindow
             Top = 20
             Width = 109
             Height = 13
-            Hint =
+            Hint = 
               'Override archive flags with a hex value.\nOblivion, Fallout 3/NV' +
               ' and Skyrim LE archives only.'
             Caption = 'Override Archive Flags'
@@ -428,7 +428,7 @@ object BakaWindow: TBakaWindow
             Top = 70
             Width = 89
             Height = 13
-            Hint =
+            Hint = 
               'Override file flags with a hex value.\nOblivion, Fallout 3/NV an' +
               'd Skyrim LE archives only.'
             Caption = 'Override File Flags'
@@ -447,7 +447,7 @@ object BakaWindow: TBakaWindow
             Top = 40
             Width = 140
             Height = 21
-            Hint =
+            Hint = 
               'Override archive flags with a hex value.\nOblivion, Fallout 3/NV' +
               ' and Skyrim LE archives only.'
             TabStop = False
@@ -466,7 +466,7 @@ object BakaWindow: TBakaWindow
             Top = 90
             Width = 140
             Height = 21
-            Hint =
+            Hint = 
               'Override file flags with a hex value.\nOblivion, Fallout 3/NV an' +
               'd Skyrim LE archives only.'
             TabStop = False

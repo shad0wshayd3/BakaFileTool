@@ -844,7 +844,7 @@ begin
 
                     if BytesRead > 0 then begin
                         Buffer[BytesRead] := #0;
-                        AddMessage(Trim(Buffer));
+                        AddMessage(Trim(String(Buffer)));
                     end;
 
                 until not WasOK or (BytesRead = 0);
@@ -1282,9 +1282,11 @@ end;
 procedure TBakaWindow.PathButtonClick(Sender: TObject);
 var
     SelectedGame: TBakaGame;
-    i, index: integer;
+    i: integer;
 
 begin
+    SelectedGame := nil;
+
     for i := 1 to MasterList.Count do begin
         if (MasterList[i].SelectButton = TButton(Sender)) then begin
             SelectedGame := MasterList[i];
