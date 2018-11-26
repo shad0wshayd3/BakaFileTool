@@ -1118,7 +1118,7 @@ begin
     SaveSettings;
 
     if SettingSaveLog.Checked then begin
-        AssignFile(logFile, TPath.Combine(GetCurrentDir, 'Baka.log')); ReWrite(logFile);
+        AssignFile(logFile, TPath.Combine(GetCurrentDir, 'BakaFileTool.log')); ReWrite(logFile);
 
         WriteLn(logFile, Console.Lines[0]);
         WriteLn(logFile, 'It''s not like I''m saving this for you or anything!');
