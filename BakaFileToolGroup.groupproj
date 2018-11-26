@@ -1,0 +1,36 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{D44B0CE5-3C4B-47AE-8B5B-48D9ED7771D2}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="BakaFileTool.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="BakaFileTool">
+        <MSBuild Projects="BakaFileTool.dproj"/>
+    </Target>
+    <Target Name="BakaFileTool:Clean">
+        <MSBuild Projects="BakaFileTool.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="BakaFileTool:Make">
+        <MSBuild Projects="BakaFileTool.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="BakaFileTool"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="BakaFileTool:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="BakaFileTool:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
