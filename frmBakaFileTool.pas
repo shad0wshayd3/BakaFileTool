@@ -98,7 +98,7 @@ type
             procedure Execute; override;
 
         public
-            constructor Create(const fileFilter: TStringList; const folderFilter: TStringList);
+            constructor Create(const fileFilter: TStringList; const folderFilter: TStringList; const Force: boolean; const Name: string; const DataPath: string);
 
     End;
 
@@ -194,7 +194,7 @@ type
 
             AdvancedSettings, ArchivePathBox, ArchiveSettings,
             ButtonBox, BlacklistBox, FO4PathBox, FO4VRPathBox, FO76PathBox,
-            GameDataBox, GameModeBox, ProgramSettings, SSEPathBox,
+            GameModeBox, ProgramSettings, SSEPathBox, ManualPathBox,
             SSEVRPathBox, TES5PathBox, DefaultGameBox: TGroupBox;
 
             SheetEditor, SheetLog, SheetPaths,
@@ -209,7 +209,7 @@ type
             FO4VRPathSelectButton, FO76PathSelectButton, RefreshButton,
             RemoveFilterButton, ResetButton, RunButton, SelectButton,
             SSEPathSelectButton, SSEVRPathSelectButton,
-            TES5PathSelectButton: TButton;
+            TES5PathSelectButton, RefreshINIButton: TButton;
 
             GameSelect, DefaultGameSelect: TComboBoxEx;
 
@@ -239,6 +239,7 @@ type
             procedure GameSelectChange(Sender: TObject);
             procedure PathButtonClick(Sender: TObject);
             procedure RefreshButtonClick(Sender: TObject);
+            procedure RefreshINIButtonClick(Sender: TObject);
             procedure RemoveFilterButtonClick(Sender: TObject);
             procedure ResetButtonClick(Sender: TObject);
             procedure RunButtonClick(Sender: TObject);
@@ -473,6 +474,8 @@ begin
             BakaWindow.FO76PathSelectButton.Enabled     := Show;
 
             BakaWindow.SelectButton.Enabled             := Show and BakaWindow.SettingDataManual.Checked;
+            BakaWindow.RefreshINIButton.Enabled         := Show and (BakaWindow.thisGame.ConfigFile <> nil);
+
             BakaWindow.SettingsBlock.Visible            := not Show;
 
             if FileList then begin
@@ -537,7 +540,6 @@ begin
         BakaWindow.archiveList.Clear; BakaWindow.textureList.Clear; BakaWindow.hasSounds := False;
 
         bFoundInvalid := False; currentCount := 0;
-        Prefix := 'Background Indexer: ';
 
         for fileName in tempFileList do begin
             Inc(currentCount);
@@ -580,11 +582,17 @@ begin
     end;
 end;
 
-constructor TBuildFileThread.Create(const fileFilter: TStringList; const folderFilter: TStringList);
+constructor TBuildFileThread.Create(const fileFilter: TStringList; const folderFilter: TStringList; const Force: boolean; const Name: string; const DataPath: string);
 begin
     inherited Create;
+
     self.fileFilter   := fileFilter;
     self.folderFilter := folderFilter;
+
+    Prefix := 'Background Indexer: ';
+
+    if not Force then AddMessage(format('Selected Game Mode: %s', [Name]), True);
+    AddMessage(format('Updating Directory Index: %s', [DataPath]), True);
 end;
 
 { TBuildArchiveThread }
@@ -752,7 +760,6 @@ begin
             thisGame.PluginFile.SaveToFile(TPath.Combine(thisGame.OutputDataPath, thisGame.PluginName));
 
         if (thisGame.ConfigFile <> nil) then begin
-            thisGame.ConfigFile.SaveToFile(TPath.Combine(thisGame.OutputDataPath, 'BakaFile.ini'));
             Synchronize(nil, procedure
             begin
                 BakaWindow.UpdateConfigFile;
@@ -803,18 +810,6 @@ begin
                 AddMessageNoTimeStamp(Format('   %s', [SysErrorMessage(GetLastError)]));
                 AddMessageNoTimeStamp('');
                 manualCopy := True;
-            end;
-
-            if thisGame.configFile <> nil then begin
-                if CopyFile(PChar(TPath.Combine(thisGame.OutputDataPath, 'BakaFile.ini')), PChar(TPath.Combine(thisGame.DataFolderPath, 'BakaFile.ini')), False) then
-                    AddMessage('Copied BakaFile.ini to Data folder!', True)
-                else begin
-                    AddMessage('Error: Couldn''t copy [ BakaFile.ini ] to Data Folder.', True);
-                    AppendStatus('See log for details.');
-                    AddMessageNoTimeStamp(Format('   %s', [SysErrorMessage(GetLastError)]));
-                    AddMessageNoTimeStamp('');
-                    manualCopy := True;
-                end;
             end;
 
             if CopyFile(PChar(thisGame.BSAMainPath), PChar(TPath.Combine(thisGame.DataFolderPath, thisGame.BSAMainName)), False) then
@@ -1140,6 +1135,9 @@ begin
         if SameText(ActiveList[SettingDefaultIndex].ShortName, MasterList[SettingMasterIndex].ShortName) then begin
             DefaultGameSelectUpdate;
 
+        end else if (SettingDefaultIndex = 0) then begin
+            DefaultGameSelectUpdate;
+
         end else if (ActiveList.IndexOf(MasterList[SettingMasterIndex]) > -1) then begin
             SettingDefaultIndex := ActiveList.IndexOf(MasterList[SettingMasterIndex]);
             DefaultGameSelectUpdate
@@ -1169,7 +1167,7 @@ begin
         end;
     end;
 
-    if (thisGame = nil) then begin
+    if (thisGame = nil) and (SettingDefaultIndex <> 0) then begin
         AddMessage('Error: Invalid Default Game selected!', True);
         AppendStatus('See log for more details.');
 
@@ -1348,9 +1346,6 @@ begin
         CachedGameIndex := GameIndex;
         isBuildingFileList := True;
 
-        if not Force then AddMessage(format('Selected Game Mode: %s', [thisGame.Name]), True) else
-        AddMessage(format('Updating Game Directory: %s', [thisGame.GetDataPath]), True);
-
         GamePath.Text := thisGame.GetDataPath;
 
         fileFilter := TStringList.Create;
@@ -1360,13 +1355,14 @@ begin
         for filter in BannedFolderPaths do folderFilter.Add(filter);
         for filter in zzFilterBox.Items do folderFilter.Add(filter);
 
-        buildFileThread := TBuildFileThread.Create(fileFilter, folderFilter);
+        buildFileThread := TBuildFileThread.Create(fileFilter, folderFilter, Force, thisGame.Name, thisGame.GetDataPath);
         SettingAdvancedClick(nil);
 
     end else begin
         SettingDataManual.Enabled := False;
         SelectButton.Enabled      := False;
         RefreshButton.Enabled     := False;
+        RefreshINIButton.Enabled  := False;
         RunButton.Enabled         := False;
 
         GamePath.Text := '';
@@ -1517,6 +1513,11 @@ end;
 procedure TBakaWindow.RefreshButtonClick(Sender: TObject);
 begin
     GameSelectUpdate(GameSelect.ItemIndex, True);
+end;
+
+procedure TBakaWindow.RefreshINIButtonClick(Sender: TObject);
+begin
+    UpdateConfigFile;
 end;
 
 procedure TBakaWindow.RemoveFilterButtonClick(Sender: TObject);
@@ -1702,11 +1703,16 @@ end;
 procedure TBakaWindow.UpdateConfigFile;
 var
     settings: TMemINIFile;
-    configName, configString: string;
+    configName, configString, configPath: string;
     configArray: array of string;
 
 begin
     if (thisGame.ConfigFile = nil) then Exit;
+    configPath := TPath.Combine(thisGame.OutputDataPath, 'BakaFile.ini');
+
+    if not DirectoryExists(thisGame.OutputDataPath) then
+        TDirectory.CreateDirectory(thisGame.OutputDataPath);
+    thisGame.ConfigFile.SaveToFile(configPath);
 
     SetLength(configArray, 2);
     configArray[0] := thisGame.ConfigCustomPath;
@@ -1718,13 +1724,26 @@ begin
             configString := settings.ReadString('Archive', 'sResourceStartUpArchiveList', '');
 
             if not configString.IsEmpty then begin
-                settings := TMemINIFile.Create(TPath.Combine(thisGame.OutputDataPath, 'BakaFile.ini'));
+                settings := TMemINIFile.Create(configPath);
                 settings.WriteString('Archive', 'sResourceStartUpArchiveList',
                     Format('%s, %s', [configString, thisGame.BSAMainName]));
                 settings.UpdateFile;
 
-                AddMessage(Format('Updated BakaFile.ini with values from %s.', [TPath.GetFileName(configName)]), True);
-                // AddMessage('BakaFile.ini should not be edited manually!');
+                // Yes, I'm really faking this for consistency in the log output. Sue me.
+                AddMessage(Format('[00:00] Config Handler: Updated BakaFile.ini with values from %s.',
+                    [TPath.GetFileName(configName)]), True);
+
+                if SettingAutoCopy.Checked then begin
+                    if CopyFile(PChar(configPath), PChar(TPath.Combine(thisGame.DataFolderPath, 'BakaFile.ini')), False) then
+                        AddMessage('[00:01] Config Handler: Copied BakaFile.ini to Data folder!', True)
+                    else begin
+                        AddMessage('[00:01] Config Handler: Error: Couldn''t copy [ BakaFile.ini ] to Data Folder.', True);
+                        AppendStatus('See log for details.');
+                        AddMessage(Format('   %s', [SysErrorMessage(GetLastError)]));
+                        AddMessage('');
+                    end;
+                end;
+
                 Break;
             end;
         end;

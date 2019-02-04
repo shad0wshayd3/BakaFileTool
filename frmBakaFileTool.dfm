@@ -26,7 +26,7 @@ object BakaWindow: TBakaWindow
     Top = 5
     Width = 735
     Height = 340
-    ActivePage = SheetSettings
+    ActivePage = SheetEditor
     Anchors = [akLeft, akTop, akRight, akBottom]
     Constraints.MinHeight = 300
     Constraints.MinWidth = 330
@@ -56,98 +56,15 @@ object BakaWindow: TBakaWindow
         Font.Style = []
         ParentFont = False
         ReadOnly = True
-        TabOrder = 1
+        TabOrder = 0
         WantReturns = False
         WordWrap = False
         ExplicitWidth = 615
       end
-      object GameDataBox: TGroupBox
-        Left = 3
-        Top = 35
-        Width = 170
-        Height = 270
-        Anchors = [akLeft, akTop, akBottom]
-        Caption = ' Main Controls '
-        TabOrder = 0
-        ExplicitHeight = 230
-        object GameModeBox: TGroupBox
-          Left = 10
-          Top = 20
-          Width = 150
-          Height = 80
-          Caption = ' Game Mode Select '
-          TabOrder = 0
-          object SettingDataManual: TCheckBox
-            Left = 10
-            Top = 20
-            Width = 130
-            Height = 20
-            TabStop = False
-            Caption = 'Manual Data Selection'
-            TabOrder = 0
-            OnClick = SettingDataManualClick
-          end
-          object GameSelect: TComboBoxEx
-            Left = 10
-            Top = 45
-            Width = 130
-            Height = 22
-            AutoCompleteOptions = []
-            ItemsEx = <>
-            Style = csExDropDownList
-            Constraints.MinHeight = 21
-            TabOrder = 1
-            TabStop = False
-            OnChange = GameSelectChange
-            DropDownCount = 15
-          end
-        end
-        object ButtonBox: TGroupBox
-          Left = 10
-          Top = 105
-          Width = 150
-          Height = 115
-          Caption = ' Run '
-          TabOrder = 1
-          object RefreshButton: TButton
-            Left = 15
-            Top = 50
-            Width = 120
-            Height = 25
-            Caption = 'Refresh Data Folder'
-            Enabled = False
-            TabOrder = 0
-            TabStop = False
-            OnClick = RefreshButtonClick
-          end
-          object RunButton: TButton
-            Left = 15
-            Top = 20
-            Width = 120
-            Height = 25
-            Caption = 'Create Archive'
-            Enabled = False
-            TabOrder = 1
-            TabStop = False
-            OnClick = RunButtonClick
-          end
-          object SelectButton: TButton
-            Left = 15
-            Top = 80
-            Width = 120
-            Height = 25
-            Caption = 'Select Folder'
-            Enabled = False
-            TabOrder = 2
-            TabStop = False
-            OnClick = SelectButtonClick
-          end
-        end
-      end
       object FileListBox: TMemo
-        Left = 180
+        Left = 160
         Top = 41
-        Width = 540
+        Width = 560
         Height = 263
         TabStop = False
         Anchors = [akLeft, akTop, akRight, akBottom]
@@ -159,10 +76,99 @@ object BakaWindow: TBakaWindow
         ParentFont = False
         ReadOnly = True
         ScrollBars = ssBoth
-        TabOrder = 2
+        TabOrder = 1
         WordWrap = False
-        ExplicitWidth = 440
-        ExplicitHeight = 223
+      end
+      object ButtonBox: TGroupBox
+        Left = 3
+        Top = 185
+        Width = 150
+        Height = 120
+        Caption = ' Run '
+        TabOrder = 2
+        object RefreshButton: TButton
+          Left = 10
+          Top = 50
+          Width = 130
+          Height = 25
+          Caption = 'Refresh Data Folder'
+          Enabled = False
+          TabOrder = 0
+          TabStop = False
+          OnClick = RefreshButtonClick
+        end
+        object RunButton: TButton
+          Left = 10
+          Top = 20
+          Width = 130
+          Height = 25
+          Caption = 'Create Archive'
+          Enabled = False
+          TabOrder = 1
+          TabStop = False
+          OnClick = RunButtonClick
+        end
+        object RefreshINIButton: TButton
+          Left = 10
+          Top = 80
+          Width = 130
+          Height = 25
+          Caption = 'Refresh BakaFile.ini'
+          TabOrder = 2
+          TabStop = False
+          OnClick = RefreshINIButtonClick
+        end
+      end
+      object GameModeBox: TGroupBox
+        Left = 3
+        Top = 35
+        Width = 150
+        Height = 55
+        Caption = ' Game Mode Select '
+        TabOrder = 3
+        object GameSelect: TComboBoxEx
+          Left = 10
+          Top = 20
+          Width = 130
+          Height = 22
+          AutoCompleteOptions = []
+          ItemsEx = <>
+          Style = csExDropDownList
+          Constraints.MinHeight = 21
+          TabOrder = 0
+          TabStop = False
+          OnChange = GameSelectChange
+          DropDownCount = 15
+        end
+      end
+      object ManualPathBox: TGroupBox
+        Left = 3
+        Top = 95
+        Width = 150
+        Height = 85
+        Caption = ' Manual Data Folder '
+        TabOrder = 4
+        object SelectButton: TButton
+          Left = 10
+          Top = 45
+          Width = 130
+          Height = 25
+          Caption = 'Select Data Folder'
+          Enabled = False
+          TabOrder = 0
+          TabStop = False
+          OnClick = SelectButtonClick
+        end
+        object SettingDataManual: TCheckBox
+          Left = 11
+          Top = 20
+          Width = 130
+          Height = 20
+          TabStop = False
+          Caption = 'Enabled'
+          TabOrder = 1
+          OnClick = SettingDataManualClick
+        end
       end
     end
     object SheetSettings: TTabSheet
