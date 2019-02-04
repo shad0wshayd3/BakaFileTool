@@ -2,11 +2,11 @@ object BakaWindow: TBakaWindow
   Left = 0
   Top = 0
   Caption = 'Baka File-senpai~!'
-  ClientHeight = 341
-  ClientWidth = 644
+  ClientHeight = 381
+  ClientWidth = 744
   Color = clBtnFace
-  Constraints.MinHeight = 380
-  Constraints.MinWidth = 660
+  Constraints.MinHeight = 420
+  Constraints.MinWidth = 760
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
@@ -17,31 +17,35 @@ object BakaWindow: TBakaWindow
   OnDestroy = FormDestroy
   OnResize = FormResize
   DesignSize = (
-    644
-    341)
+    744
+    381)
   PixelsPerInch = 96
   TextHeight = 13
   object MetaFrame: TPageControl
     Left = 5
     Top = 5
-    Width = 635
-    Height = 300
-    ActivePage = SheetEditor
+    Width = 735
+    Height = 340
+    ActivePage = SheetSettings
     Anchors = [akLeft, akTop, akRight, akBottom]
     Constraints.MinHeight = 300
     Constraints.MinWidth = 330
     TabOrder = 0
     TabPosition = tpBottom
     TabStop = False
+    ExplicitWidth = 635
+    ExplicitHeight = 300
     object SheetEditor: TTabSheet
       Caption = 'Tool'
+      ExplicitWidth = 627
+      ExplicitHeight = 274
       DesignSize = (
-        627
-        274)
+        727
+        314)
       object GamePath: TMemo
         Left = 5
         Top = 5
-        Width = 615
+        Width = 715
         Height = 25
         TabStop = False
         Anchors = [akLeft, akTop, akRight]
@@ -55,15 +59,17 @@ object BakaWindow: TBakaWindow
         TabOrder = 1
         WantReturns = False
         WordWrap = False
+        ExplicitWidth = 615
       end
       object GameDataBox: TGroupBox
         Left = 3
         Top = 35
         Width = 170
-        Height = 230
+        Height = 270
         Anchors = [akLeft, akTop, akBottom]
         Caption = ' Main Controls '
         TabOrder = 0
+        ExplicitHeight = 230
         object GameModeBox: TGroupBox
           Left = 10
           Top = 20
@@ -141,8 +147,8 @@ object BakaWindow: TBakaWindow
       object FileListBox: TMemo
         Left = 180
         Top = 41
-        Width = 440
-        Height = 223
+        Width = 540
+        Height = 263
         TabStop = False
         Anchors = [akLeft, akTop, akRight, akBottom]
         Font.Charset = DEFAULT_CHARSET
@@ -155,28 +161,156 @@ object BakaWindow: TBakaWindow
         ScrollBars = ssBoth
         TabOrder = 2
         WordWrap = False
+        ExplicitWidth = 440
+        ExplicitHeight = 223
       end
     end
     object SheetSettings: TTabSheet
       Caption = 'Settings'
       ImageIndex = 1
+      ExplicitWidth = 627
+      ExplicitHeight = 274
       DesignSize = (
-        627
-        274)
+        727
+        314)
+      object AdvancedSettings: TGroupBox
+        Left = 3
+        Top = 168
+        Width = 180
+        Height = 140
+        Caption = ' Advanced Settings (Skyrim LE) '
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 4
+        object ArchiveFlags: TLabel
+          Left = 10
+          Top = 51
+          Width = 109
+          Height = 13
+          Hint = 
+            'Override archive flags with a hex value. Skyrim LE archives only' +
+            '.'
+          Caption = 'Override Archive Flags'
+          Color = clBtnText
+          Enabled = False
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentColor = False
+          ParentFont = False
+        end
+        object FileFlags: TLabel
+          Left = 10
+          Top = 91
+          Width = 89
+          Height = 13
+          Hint = 'Override file flags with a hex value. Skyrim LE archives only.'
+          Caption = 'Override File Flags'
+          Color = clBtnText
+          Enabled = False
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentColor = False
+          ParentFont = False
+        end
+        object SettingArchiveFlags: TEdit
+          Left = 10
+          Top = 66
+          Width = 160
+          Height = 23
+          Hint = 
+            'Override archive flags with a hex value. Skyrim LE archives only' +
+            '.'
+          TabStop = False
+          CharCase = ecLowerCase
+          Enabled = False
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 0
+        end
+        object SettingFileFlags: TEdit
+          Left = 10
+          Top = 106
+          Width = 160
+          Height = 23
+          Hint = 'Override file flags with a hex value. Skyrim LE archives only.'
+          TabStop = False
+          Enabled = False
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Consolas'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 1
+        end
+        object SettingAdvanced: TCheckBox
+          Left = 10
+          Top = 20
+          Width = 150
+          Height = 25
+          Hint = 'Enables archive flag overrides'
+          TabStop = False
+          Caption = 'Enable Advanced Settings'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 2
+          OnClick = SettingAdvancedClick
+        end
+      end
+      object DefaultGameBox: TGroupBox
+        Left = 3
+        Top = 3
+        Width = 180
+        Height = 55
+        Caption = ' Default Game '
+        TabOrder = 5
+        object DefaultGameSelect: TComboBoxEx
+          Left = 10
+          Top = 20
+          Width = 160
+          Height = 22
+          ItemsEx = <>
+          Style = csExDropDownList
+          TabOrder = 0
+          TabStop = False
+          OnChange = DefaultGameSelectChange
+        end
+      end
       object ProgramSettings: TGroupBox
         Left = 193
         Top = 3
         Width = 180
-        Height = 265
-        Anchors = [akLeft, akTop, akBottom]
+        Height = 305
         Caption = ' Program Settings '
         TabOrder = 3
         DesignSize = (
           180
-          265)
+          305)
         object SettingArchive2: TCheckBox
           Left = 10
-          Top = 170
+          Top = 195
           Width = 160
           Height = 25
           TabStop = False
@@ -185,7 +319,7 @@ object BakaWindow: TBakaWindow
         end
         object SettingWarnMissing: TCheckBox
           Left = 10
-          Top = 145
+          Top = 170
           Width = 160
           Height = 25
           TabStop = False
@@ -196,7 +330,7 @@ object BakaWindow: TBakaWindow
         end
         object SettingMaximized: TCheckBox
           Left = 10
-          Top = 120
+          Top = 145
           Width = 160
           Height = 25
           TabStop = False
@@ -205,7 +339,7 @@ object BakaWindow: TBakaWindow
         end
         object SettingSaveLog: TCheckBox
           Left = 10
-          Top = 95
+          Top = 120
           Width = 160
           Height = 25
           TabStop = False
@@ -216,7 +350,7 @@ object BakaWindow: TBakaWindow
         end
         object SettingAutoRefresh: TCheckBox
           Left = 10
-          Top = 70
+          Top = 95
           Width = 160
           Height = 25
           TabStop = False
@@ -234,7 +368,7 @@ object BakaWindow: TBakaWindow
         end
         object ResetButton: TButton
           Left = 9
-          Top = 230
+          Top = 270
           Width = 162
           Height = 25
           Anchors = [akLeft, akBottom]
@@ -242,6 +376,7 @@ object BakaWindow: TBakaWindow
           TabOrder = 6
           TabStop = False
           OnClick = ResetButtonClick
+          ExplicitTop = 230
         end
         object SettingAutoScroll: TCheckBox
           Left = 10
@@ -253,23 +388,35 @@ object BakaWindow: TBakaWindow
           TabOrder = 7
           OnClick = SettingAutoScrollClick
         end
+        object SettingRelativePaths: TCheckBox
+          Left = 10
+          Top = 70
+          Width = 160
+          Height = 25
+          TabStop = False
+          Caption = 'Display Relative File Names'
+          TabOrder = 8
+          OnClick = SettingRelativePathsClick
+        end
       end
       object BlacklistBox: TGroupBox
         Left = 383
         Top = 3
-        Width = 240
-        Height = 265
+        Width = 340
+        Height = 305
         Anchors = [akLeft, akTop, akRight, akBottom]
         Caption = ' User Blacklist '
         TabOrder = 2
+        ExplicitWidth = 240
+        ExplicitHeight = 265
         DesignSize = (
-          240
-          265)
+          340
+          305)
         object zzFilterBox: TListBox
           Left = 10
           Top = 20
-          Width = 220
-          Height = 200
+          Width = 320
+          Height = 240
           TabStop = False
           Anchors = [akLeft, akTop, akRight, akBottom]
           Font.Charset = DEFAULT_CHARSET
@@ -281,11 +428,13 @@ object BakaWindow: TBakaWindow
           ParentFont = False
           Sorted = True
           TabOrder = 0
+          ExplicitWidth = 220
+          ExplicitHeight = 200
         end
         object zzFilterInput: TEdit
           Left = 70
-          Top = 231
-          Width = 160
+          Top = 271
+          Width = 260
           Height = 23
           TabStop = False
           Anchors = [akLeft, akRight, akBottom]
@@ -296,10 +445,12 @@ object BakaWindow: TBakaWindow
           Font.Style = []
           ParentFont = False
           TabOrder = 1
+          ExplicitTop = 231
+          ExplicitWidth = 160
         end
         object AddFilterButton: TButton
           Left = 9
-          Top = 230
+          Top = 270
           Width = 25
           Height = 25
           Anchors = [akLeft, akBottom]
@@ -307,10 +458,11 @@ object BakaWindow: TBakaWindow
           TabOrder = 2
           TabStop = False
           OnClick = AddFilterButtonClick
+          ExplicitTop = 230
         end
         object RemoveFilterButton: TButton
           Left = 39
-          Top = 230
+          Top = 270
           Width = 25
           Height = 25
           Anchors = [akLeft, akBottom]
@@ -318,14 +470,14 @@ object BakaWindow: TBakaWindow
           TabOrder = 3
           TabStop = False
           OnClick = RemoveFilterButtonClick
+          ExplicitTop = 230
         end
       end
       object ArchiveSettings: TGroupBox
         Left = 3
-        Top = 3
+        Top = 63
         Width = 180
-        Height = 265
-        Anchors = [akLeft, akTop, akBottom]
+        Height = 100
         Caption = ' Archive Settings '
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -334,16 +486,6 @@ object BakaWindow: TBakaWindow
         Font.Style = []
         ParentFont = False
         TabOrder = 0
-        DesignSize = (
-          180
-          265)
-        object Spacer: TShape
-          Left = 10
-          Top = 100
-          Width = 160
-          Height = 1
-          Pen.Color = 14474460
-        end
         object SettingCompress: TCheckBox
           Left = 10
           Top = 20
@@ -384,121 +526,6 @@ object BakaWindow: TBakaWindow
           ShowHint = True
           TabOrder = 1
         end
-        object AdvancedSettings: TGroupBox
-          Left = 10
-          Top = 135
-          Width = 160
-          Height = 120
-          Hint = 
-            'Override archive or file flags with a hex value. Oblivion, Fallo' +
-            'ut 3/NV and Skyrim LE archives only.'
-          Anchors = [akLeft, akTop, akBottom]
-          Caption = ' Advanced Settings '
-          Enabled = False
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = []
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-          TabOrder = 2
-          object ArchiveFlags: TLabel
-            Left = 10
-            Top = 20
-            Width = 109
-            Height = 13
-            Hint = 
-              'Override archive flags with a hex value.\nOblivion, Fallout 3/NV' +
-              ' and Skyrim LE archives only.'
-            Caption = 'Override Archive Flags'
-            Color = clBtnText
-            Enabled = False
-            Font.Charset = DEFAULT_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -11
-            Font.Name = 'Tahoma'
-            Font.Style = []
-            ParentColor = False
-            ParentFont = False
-          end
-          object FileFlags: TLabel
-            Left = 10
-            Top = 70
-            Width = 89
-            Height = 13
-            Hint = 
-              'Override file flags with a hex value.\nOblivion, Fallout 3/NV an' +
-              'd Skyrim LE archives only.'
-            Caption = 'Override File Flags'
-            Color = clBtnText
-            Enabled = False
-            Font.Charset = DEFAULT_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -11
-            Font.Name = 'Tahoma'
-            Font.Style = []
-            ParentColor = False
-            ParentFont = False
-          end
-          object SettingArchiveFlags: TEdit
-            Left = 10
-            Top = 40
-            Width = 140
-            Height = 21
-            Hint = 
-              'Override archive flags with a hex value.\nOblivion, Fallout 3/NV' +
-              ' and Skyrim LE archives only.'
-            TabStop = False
-            CharCase = ecLowerCase
-            Enabled = False
-            Font.Charset = DEFAULT_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -11
-            Font.Name = 'Tahoma'
-            Font.Style = []
-            ParentFont = False
-            TabOrder = 0
-          end
-          object SettingFileFlags: TEdit
-            Left = 10
-            Top = 90
-            Width = 140
-            Height = 21
-            Hint = 
-              'Override file flags with a hex value.\nOblivion, Fallout 3/NV an' +
-              'd Skyrim LE archives only.'
-            TabStop = False
-            Enabled = False
-            Font.Charset = DEFAULT_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -11
-            Font.Name = 'Consolas'
-            Font.Style = []
-            ParentFont = False
-            TabOrder = 1
-          end
-        end
-        object SettingAdvanced: TCheckBox
-          Left = 10
-          Top = 105
-          Width = 150
-          Height = 25
-          Hint = 'Enables archive flag overrides'
-          TabStop = False
-          Caption = 'Enable Advanced Settings'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = []
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-          TabOrder = 3
-          OnClick = SettingAdvancedClick
-        end
         object SettingThreaded: TCheckBox
           Left = 10
           Top = 70
@@ -509,25 +536,27 @@ object BakaWindow: TBakaWindow
           Caption = 'Multi-Threaded Archiving'
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 4
+          TabOrder = 2
         end
       end
       object SettingsBlock: TPanel
         Left = 3
         Top = -621
-        Width = 621
-        Height = 525
+        Width = 721
+        Height = 565
         Anchors = [akLeft, akTop, akRight, akBottom]
         BevelEdges = []
         BevelOuter = bvNone
         TabOrder = 1
         Visible = False
+        ExplicitWidth = 621
+        ExplicitHeight = 525
         DesignSize = (
-          621
-          525)
+          721
+          565)
         object BlockText01: TLabel
-          Left = 68
-          Top = 90
+          Left = 118
+          Top = 98
           Width = 485
           Height = 43
           Alignment = taCenter
@@ -540,10 +569,12 @@ object BakaWindow: TBakaWindow
           Font.Name = 'Tahoma'
           Font.Style = []
           ParentFont = False
+          ExplicitLeft = 68
+          ExplicitTop = 90
         end
         object BlockText02: TLabel
-          Left = 158
-          Top = 120
+          Left = 208
+          Top = 130
           Width = 305
           Height = 32
           Alignment = taCenter
@@ -556,10 +587,12 @@ object BakaWindow: TBakaWindow
           Font.Name = 'Tahoma'
           Font.Style = []
           ParentFont = False
+          ExplicitLeft = 158
+          ExplicitTop = 120
         end
         object BlockText03: TLabel
-          Left = 203
-          Top = 140
+          Left = 253
+          Top = 152
           Width = 215
           Height = 26
           Alignment = taCenter
@@ -572,20 +605,24 @@ object BakaWindow: TBakaWindow
           Font.Name = 'Tahoma'
           Font.Style = []
           ParentFont = False
+          ExplicitLeft = 203
+          ExplicitTop = 140
         end
       end
     end
     object SheetPaths: TTabSheet
       Caption = 'Paths'
       ImageIndex = 3
+      ExplicitWidth = 627
+      ExplicitHeight = 274
       DesignSize = (
-        627
-        274)
+        727
+        314)
       object GamePathBox: TScrollBox
         Left = 3
         Top = 65
-        Width = 619
-        Height = 200
+        Width = 719
+        Height = 240
         HorzScrollBar.Visible = False
         VertScrollBar.Size = 20
         VertScrollBar.Tracking = True
@@ -595,19 +632,22 @@ object BakaWindow: TBakaWindow
         TabOrder = 1
         OnMouseWheel = GamePathBoxMouseWheel
         OnResize = GamePathBoxResize
+        ExplicitWidth = 619
+        ExplicitHeight = 200
         DesignSize = (
-          602
-          200)
+          702
+          240)
         object FO76PathBox: TGroupBox
           Left = 0
           Top = 10
-          Width = 595
+          Width = 695
           Height = 60
           Anchors = [akLeft, akTop, akRight]
           Caption = ' Fallout 76 Path '
           TabOrder = 1
+          ExplicitWidth = 595
           DesignSize = (
-            595
+            695
             60)
           object FO76PathSelectButton: TButton
             Left = 10
@@ -622,7 +662,7 @@ object BakaWindow: TBakaWindow
           object SettingFO76Path: TEdit
             Left = 145
             Top = 21
-            Width = 440
+            Width = 540
             Height = 23
             TabStop = False
             Anchors = [akLeft, akTop, akRight]
@@ -634,18 +674,20 @@ object BakaWindow: TBakaWindow
             ParentFont = False
             ReadOnly = True
             TabOrder = 1
+            ExplicitWidth = 440
           end
         end
         object FO4PathBox: TGroupBox
           Left = 0
           Top = 75
-          Width = 595
+          Width = 695
           Height = 60
           Anchors = [akLeft, akTop, akRight]
           Caption = ' Fallout 4 Path '
           TabOrder = 0
+          ExplicitWidth = 595
           DesignSize = (
-            595
+            695
             60)
           object FO4PathSelectButton: TButton
             Left = 10
@@ -660,7 +702,7 @@ object BakaWindow: TBakaWindow
           object SettingFO4Path: TEdit
             Left = 145
             Top = 21
-            Width = 440
+            Width = 540
             Height = 23
             TabStop = False
             Anchors = [akLeft, akTop, akRight]
@@ -672,18 +714,20 @@ object BakaWindow: TBakaWindow
             ParentFont = False
             ReadOnly = True
             TabOrder = 1
+            ExplicitWidth = 440
           end
         end
         object SSEPathBox: TGroupBox
           Left = 0
           Top = 140
-          Width = 595
+          Width = 695
           Height = 60
           Anchors = [akLeft, akTop, akRight]
           Caption = ' Skyrim Special Edition Path '
           TabOrder = 2
+          ExplicitWidth = 595
           DesignSize = (
-            595
+            695
             60)
           object SSEPathSelectButton: TButton
             Left = 10
@@ -698,7 +742,7 @@ object BakaWindow: TBakaWindow
           object SettingSSEPath: TEdit
             Left = 145
             Top = 21
-            Width = 440
+            Width = 540
             Height = 23
             TabStop = False
             Anchors = [akLeft, akTop, akRight]
@@ -710,18 +754,20 @@ object BakaWindow: TBakaWindow
             ParentFont = False
             ReadOnly = True
             TabOrder = 1
+            ExplicitWidth = 440
           end
         end
         object FO4VRPathBox: TGroupBox
           Left = 0
           Top = 270
-          Width = 595
+          Width = 695
           Height = 60
           Anchors = [akLeft, akTop, akRight]
           Caption = ' Fallout 4 VR Path '
           TabOrder = 3
+          ExplicitWidth = 595
           DesignSize = (
-            595
+            695
             60)
           object FO4VRPathSelectButton: TButton
             Left = 10
@@ -736,7 +782,7 @@ object BakaWindow: TBakaWindow
           object SettingFO4VRPath: TEdit
             Left = 145
             Top = 21
-            Width = 440
+            Width = 540
             Height = 23
             TabStop = False
             Anchors = [akLeft, akTop, akRight]
@@ -748,18 +794,20 @@ object BakaWindow: TBakaWindow
             ParentFont = False
             ReadOnly = True
             TabOrder = 1
+            ExplicitWidth = 440
           end
         end
         object SSEVRPathBox: TGroupBox
           Left = 0
           Top = 335
-          Width = 595
+          Width = 695
           Height = 60
           Anchors = [akLeft, akTop, akRight]
           Caption = ' Skyrim VR Path '
           TabOrder = 4
+          ExplicitWidth = 595
           DesignSize = (
-            595
+            695
             60)
           object SSEVRPathSelectButton: TButton
             Left = 10
@@ -774,7 +822,7 @@ object BakaWindow: TBakaWindow
           object SettingSSEVRPath: TEdit
             Left = 145
             Top = 21
-            Width = 440
+            Width = 540
             Height = 23
             TabStop = False
             Anchors = [akLeft, akTop, akRight]
@@ -786,18 +834,20 @@ object BakaWindow: TBakaWindow
             ParentFont = False
             ReadOnly = True
             TabOrder = 1
+            ExplicitWidth = 440
           end
         end
         object TES5PathBox: TGroupBox
           Left = 0
           Top = 205
-          Width = 595
+          Width = 695
           Height = 60
           Anchors = [akLeft, akTop, akRight]
           Caption = ' Skyrim (Classic) Path '
           TabOrder = 5
+          ExplicitWidth = 595
           DesignSize = (
-            595
+            695
             60)
           object TES5PathSelectButton: TButton
             Left = 10
@@ -812,7 +862,7 @@ object BakaWindow: TBakaWindow
           object SettingTES5Path: TEdit
             Left = 145
             Top = 21
-            Width = 440
+            Width = 540
             Height = 23
             TabStop = False
             Anchors = [akLeft, akTop, akRight]
@@ -824,19 +874,21 @@ object BakaWindow: TBakaWindow
             ParentFont = False
             ReadOnly = True
             TabOrder = 1
+            ExplicitWidth = 440
           end
         end
       end
       object ArchivePathBox: TGroupBox
         Left = 3
         Top = 3
-        Width = 619
+        Width = 719
         Height = 60
         Anchors = [akLeft, akTop, akRight]
         Caption = ' Archive2 Path '
         TabOrder = 0
+        ExplicitWidth = 619
         DesignSize = (
-          619
+          719
           60)
         object ArchiveSelectButton: TButton
           Left = 10
@@ -851,7 +903,7 @@ object BakaWindow: TBakaWindow
         object SettingArchivePath: TEdit
           Left = 145
           Top = 21
-          Width = 462
+          Width = 562
           Height = 23
           TabStop = False
           Anchors = [akLeft, akTop, akRight]
@@ -863,20 +915,23 @@ object BakaWindow: TBakaWindow
           ParentFont = False
           ReadOnly = True
           TabOrder = 1
+          ExplicitWidth = 462
         end
       end
     end
     object SheetLog: TTabSheet
       Caption = 'Log'
       ImageIndex = 2
+      ExplicitWidth = 627
+      ExplicitHeight = 274
       DesignSize = (
-        627
-        274)
+        727
+        314)
       object Console: TMemo
         Left = 0
         Top = 1
-        Width = 625
-        Height = 270
+        Width = 725
+        Height = 310
         TabStop = False
         Anchors = [akLeft, akTop, akRight, akBottom]
         BevelInner = bvNone
@@ -890,26 +945,32 @@ object BakaWindow: TBakaWindow
         ReadOnly = True
         ScrollBars = ssBoth
         TabOrder = 0
+        ExplicitWidth = 625
+        ExplicitHeight = 270
       end
     end
   end
   object StatusBar: TStatusBar
     Left = 0
-    Top = 311
-    Width = 644
+    Top = 351
+    Width = 744
     Height = 30
     Panels = <
       item
         Width = 50
       end>
+    ExplicitTop = 311
+    ExplicitWidth = 644
   end
   object ProgressBar: TProgressBar
-    Left = 470
-    Top = 316
+    Left = 570
+    Top = 356
     Width = 150
     Height = 20
     Anchors = [akRight, akBottom]
     TabOrder = 2
+    ExplicitLeft = 470
+    ExplicitTop = 316
   end
   object BakaFileTES5: TFileContainer
     Compressed = True

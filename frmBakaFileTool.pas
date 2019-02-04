@@ -78,8 +78,11 @@ type
             procedure ClearProgress;
 
             procedure AddMessage(const Message: string; const onStatus: boolean = False; const onlyStatus: boolean = False);
+            procedure AddMessageNoTimestamp(const Message: string);
+
+            procedure AppendStatus(const Addition: string);
             procedure UpdateProgress(const current: integer; const max: integer);
-            procedure UpdateUI(const Show, FileList: boolean);
+            procedure UpdateUI(const Show, FileList: boolean; const SayDone: boolean = False);
 
         public
             constructor Create;
@@ -88,14 +91,14 @@ type
 
     TBuildFileThread = Class(TBakaThread)
         private
-            fileFilter: TStringList;
+            fileFilter, folderFilter: TStringList;
             procedure UpdateFileList(const NewLine: string);
 
         protected
             procedure Execute; override;
 
         public
-            constructor Create(const fileFilter: TStringList);
+            constructor Create(const fileFilter: TStringList; const folderFilter: TStringList);
 
     End;
 
@@ -147,26 +150,35 @@ type
             MasterList: TList<TBakaGame>;
             thisGame: TBakaGame;
 
-            isBuildingArchive, isBuildingFileList, hasSounds: boolean;
+            isBuildingArchive, isBuildingFileList,
+            hasSounds, SettingFilterDirty: boolean;
 
             archiveList, textureList: TStringList;
-            CachedGameIndex: integer;
 
-            BannedFileNamePaths: array of string;
+            CachedGameIndex, SettingDefaultIndex,
+            SettingMasterIndex: integer;
+
+            BannedFileNames: array of string;
+            BannedFolderPaths: array of string;
             archivePath: string;
 
             function AddWrapper(List: TList<TBakaGame>; const shortName: string; const Name: string; const BSAType: TBSArchiveType; const isBA2: boolean = False): TBakaGame;
 
             procedure GameSelectUpdate(GameIndex: integer; const Force: boolean = False);
 
+            procedure DefaultGameSelectUpdate;
+            procedure InitMasterList;
             procedure InitWindowSettings;
             procedure LoadSettings;
             procedure SaveSettings;
-            procedure UpdatePluginFile;
+            procedure UpdateConfigFile;
 
         public
             procedure AddMessage(const Message: string; const onStatus: boolean = False; const onlyStatus: boolean = False);
-            procedure AppendMessage(const Addition: string);
+            procedure AppendMessage(const Addition: string; const Spacer: string = ' ');
+            procedure AppendStatus(const Addition: string; const Spacer: string = ' ');
+
+            procedure UpdatePluginFile;
 
         published
             MetaFrame: TPageControl;
@@ -177,13 +189,13 @@ type
             SettingAdvanced, SettingArchive2, SettingAutoCopy,
             SettingAutoRefresh, SettingAutoScroll, SettingCompress,
             SettingDataManual, SettingMaximized, SettingThreaded,
-            SettingSaveLog, SettingShare,
+            SettingRelativePaths, SettingSaveLog, SettingShare,
             SettingWarnMissing: TCheckBox;
 
             AdvancedSettings, ArchivePathBox, ArchiveSettings,
             ButtonBox, BlacklistBox, FO4PathBox, FO4VRPathBox, FO76PathBox,
             GameDataBox, GameModeBox, ProgramSettings, SSEPathBox,
-            SSEVRPathBox, TES5PathBox: TGroupBox;
+            SSEVRPathBox, TES5PathBox, DefaultGameBox: TGroupBox;
 
             SheetEditor, SheetLog, SheetPaths,
             SheetSettings: TTabSheet;
@@ -199,14 +211,14 @@ type
             SSEPathSelectButton, SSEVRPathSelectButton,
             TES5PathSelectButton: TButton;
 
+            GameSelect, DefaultGameSelect: TComboBoxEx;
+
             Console, GamePath,
             FileListBox: TMemo;
 
-            GameSelect      : TComboBoxEx;
             ProgressBar     : TProgressBar;
             SettingsBlock   : TPanel;
             GamePathBox     : TScrollBox;
-            Spacer          : TShape;
             StatusBar       : TStatusBar;
             zzFilterBox     : TListBox;
 
@@ -220,6 +232,7 @@ type
             procedure FormCreate(Sender: TObject);
             procedure FormDestroy(Sender: TObject);
             procedure FormResize(Sender: TObject);
+            procedure DefaultGameSelectChange(Sender: TObject);
             procedure GamePathBoxMouseWheel(Sender: TObject; Shift: TShiftState;
                 WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
             procedure GamePathBoxResize(Sender: TObject);
@@ -233,6 +246,7 @@ type
             procedure SettingAdvancedClick(Sender: TObject);
             procedure SettingAutoScrollClick(Sender: TObject);
             procedure SettingDataManualClick(Sender: TObject);
+            procedure SettingRelativePathsClick(Sender: TObject);
 
     End;
 
@@ -358,20 +372,20 @@ begin
     self.BSAType := BSAType;
     self.isBA2   := isBA2;
 
-    self.OutputDataPath := TPath.Combine('BakaOutput', Name);
-    self.InputDataPath := '';
+    OutputDataPath := TPath.Combine(GetCurrentDir, TPath.Combine('BakaOutput', self.Name));
+    InputDataPath := '';
 
-    self.pluginFile := nil;
-    self.configFile := nil;
+    pluginFile := nil;
+    configFile := nil;
 
     if self.isBA2 then begin
-        self.BSAMainName    := 'BakaFile - Main.ba2';
-        self.BSATextureName := 'BakaFile - Textures.ba2';
-        self.BSATexturePath := Format('BakaOutput\%s\%s', [self.Name, self.BSATextureName]);
+        BSAMainName    := 'BakaFile - Main.ba2';
+        BSATextureName := 'BakaFile - Textures.ba2';
+        BSATexturePath := TPath.Combine(OutputDataPath, BSATextureName);
 
-    end else self.BSAMainName := 'BakaFile.bsa';
+    end else BSAMainName := 'BakaFile.bsa';
 
-    self.BSAMainPath := Format('BakaOutput\%s\%s', [self.Name, self.BSAMainName]);
+    BSAMainPath := TPath.Combine(OutputDataPath, BSAMainName);
 end;
 
 { TBakaThread }
@@ -396,7 +410,9 @@ begin
         lastShownTime := currentTime;
 
     if ((currentTime - lastShownTime) > 1/24/60/60) or (lastShownMessage <> Message) then begin
-        sMessage := Format('[%s] %s%s', [FormatDateTime('nn:ss', currentTime - threadStartTime), Prefix, Message]);
+        if SameText(lastShownMessage, Message) then
+            sMessage := Format('[%s] %sStill %s', [FormatDateTime('nn:ss', currentTime - threadStartTime), Prefix, Message])
+        else sMessage := Format('[%s] %s%s', [FormatDateTime('nn:ss', currentTime - threadStartTime), Prefix, Message]);
         lastShownTime := currentTime; lastShownMessage := Message;
 
         Synchronize(nil, procedure
@@ -404,6 +420,22 @@ begin
             BakaWindow.AddMessage(sMessage, onStatus, onlyStatus);
         end);
     end;
+end;
+
+procedure TBakaThread.AddMessageNoTimestamp(const Message: string);
+begin
+    Synchronize(nil, procedure
+    begin
+        BakaWindow.AddMessage(Message);
+    end);
+end;
+
+procedure TBakaThread.AppendStatus(const Addition: string);
+begin
+    Synchronize(nil, procedure
+    begin
+        BakaWindow.AppendStatus(Addition);
+    end);
 end;
 
 procedure TBakaThread.UpdateProgress(const current: integer; const max: integer);
@@ -419,7 +451,7 @@ begin
     );
 end;
 
-procedure TBakaThread.UpdateUI(const Show, FileList: boolean);
+procedure TBakaThread.UpdateUI(const Show, FileList: boolean; const SayDone: boolean);
 begin
     ClearProgress;
 
@@ -450,8 +482,19 @@ begin
 
             if Show then begin
                 if ((BakaWindow.archiveList.Count = 0) and (BakaWindow.textureList.Count = 0)) then begin
+                    Prefix := '';
                     AddMessage('Error: No valid files were found in the directory!', True);
+                    AppendStatus('See log for more details.');
+
+                    AddMessageNoTimestamp('   This is usually caused by running Baka File Tool before installing any mods.');
+                    AddMessageNoTimestamp('   If mods have been installed to the Data folder, and this error appears, try running Baka File Tool as administrator.');
+
+                    AddMessageNoTimestamp('');
+
                     BakaWindow.RunButton.Enabled := False;
+
+                end else if SayDone then begin
+                    AddMessage('Done.', True);
                 end;
             end;
         end
@@ -472,7 +515,9 @@ procedure TBuildFileThread.UpdateFileList(const NewLine: string);
 begin
     Synchronize(nil, procedure
         begin
-            BakaWindow.FileListBox.Lines.Add(NewLine);
+            if BakaWindow.SettingRelativePaths.Checked then
+                BakaWindow.FileListBox.Lines.Add(Copy(NewLine, BakaWindow.thisGame.DataFolderPath.Length + 2, NewLine.Length))
+            else BakaWindow.FileListBox.Lines.Add(NewLine);
         end
     );
 end;
@@ -492,6 +537,7 @@ begin
         BakaWindow.archiveList.Clear; BakaWindow.textureList.Clear; BakaWindow.hasSounds := False;
 
         bFoundInvalid := False; currentCount := 0;
+        Prefix := 'Background Indexer: ';
 
         for fileName in tempFileList do begin
             Inc(currentCount);
@@ -500,7 +546,15 @@ begin
             AddMessage('Building File List...', True);
 
             if SameText(BakaWindow.thisGame.GetDataPath(False), TPath.GetDirectoryName(fileName)) then Continue;
+
             for filter in fileFilter do begin
+                bFoundInvalid := ContainsText(TPath.GetFileName(fileName), filter);
+                if bFoundInvalid then Break;
+            end;
+
+            if bFoundInvalid then Continue;
+
+            for filter in folderFilter do begin
                 bFoundInvalid := ContainsText(fileName, filter);
                 if bFoundInvalid then Break;
             end;
@@ -519,19 +573,18 @@ begin
             else BakaWindow.archiveList.Add(fileName);
         end;
 
-        AddMessage('Done.', True);
-
     finally
         BakaWindow.isBuildingFileList := False;
-        UpdateUI(True, True);
+        UpdateUI(True, True, True);
         self.Destroy;
     end;
 end;
 
-constructor TBuildFileThread.Create(const fileFilter: TStringList);
+constructor TBuildFileThread.Create(const fileFilter: TStringList; const folderFilter: TStringList);
 begin
     inherited Create;
-    self.fileFilter := fileFilter;
+    self.fileFilter   := fileFilter;
+    self.folderFilter := folderFilter;
 end;
 
 { TBuildArchiveThread }
@@ -548,7 +601,11 @@ begin
     Archive  := TwbBSArchive.Create;
     relList  := TStringList.Create;
 
-    Prefix := 'Background Archiver: ';
+    if thisGame.isBA2 then
+        if settings.Texture then
+            Prefix := 'Background Archiver: Texture Archive: '
+        else Prefix := 'Background Archiver: Main Archive: '
+    else Prefix := 'Background Archiver: ';
 
     for fileName in fileList do
         relList.Add(Copy(fileName, Succ(Length(rootName)), Length(fileName)));
@@ -572,8 +629,11 @@ begin
 
         except
             on E: Exception do begin
-                AddMessage('Error: See Log for details.', True, True);
-                AddMessage(Format('Error: Couldn''t create Archive File: %s', [E.Message]));
+                AddMessage('Error: Couldn''t create Archive File.', True);
+                AppendStatus('See log for details.');
+
+                AddMessageNoTimeStamp(Format('   %s', [E.Message]));
+                AddMessageNoTimeStamp('');
                 Exit;
             end;
         end;
@@ -589,11 +649,7 @@ begin
         if settings.MultiThread then
             Archive.Sync := TSimpleRWSync.Create;
 
-        if thisGame.isBA2 then
-            if settings.Texture then
-                AddMessage('Starting Texture Archive Packing.', True)
-            else AddMessage('Starting Main Archive Packing.', True)
-        else AddMessage('Starting Archive Packing.', True);
+        AddMessage('Starting...', True);
 
         currentCount := 0;
         if Assigned(Archive.Sync) then begin
@@ -603,8 +659,12 @@ begin
                     Archive.AddFile(rootName, fileList[i]);
                 except
                     on E: Exception do begin
-                        AddMessage('Error: See Log for details.', True, True);
-                        AddMessage(Format('Error: Couldn''t pack %s into Archive File: %s', [relList[i], E.Message]));
+                        AddMessage('Error: Couldn''t pack file into Archive File.', True);
+                        AppendStatus('See log for details.');
+
+                        AddMessageNoTimeStamp(Format('   File: %s', [relList[i]]));
+                        AddMessageNoTimeStamp(Format('   Error: %s', [E.Message]));
+                        AddMessageNoTimeStamp('');
                         Exit
                     end;
                 end;
@@ -612,11 +672,7 @@ begin
                 Archive.Sync.BeginWrite;
                 try
                     Inc(currentCount); UpdateProgress(currentCount, fileList.Count);
-                    if thisGame.isBA2 then
-                        if settings.Texture then
-                            AddMessage('Packing Texture Archive File...', True)
-                        else AddMessage('Packing Main Archive File...', True)
-                    else AddMessage('Packing Archive File...', True);
+                    AddMessage('Packing...', True);
 
                 finally
                     Archive.Sync.EndWrite;
@@ -628,18 +684,18 @@ begin
                     Archive.AddFile(rootName, fileList[i]);
                 except
                     on E: Exception do begin
-                        AddMessage('Error: See Log for details.', True, True);
-                        AddMessage(Format('Error: Couldn''t pack %s into Archive File: %s', [relList[i], E.Message]));
+                        AddMessage('Error: Couldn''t pack file into Archive File.', True);
+                        AppendStatus('See log for details.');
+
+                        AddMessageNoTimeStamp(Format('   File: %s', [relList[i]]));
+                        AddMessageNoTimeStamp(Format('   Error: %s', [E.Message]));
+                        AddMessageNoTimeStamp('');
                         Exit;
                     end;
                 end;
 
                 Inc(currentCount); UpdateProgress(currentCount, fileList.Count);
-                if thisGame.isBA2 then
-                    if settings.Texture then
-                        AddMessage('Packing Texture Archive File...', True)
-                    else AddMessage('Packing Main Archive File...', True)
-                else AddMessage('Packing Archive File...', True);
+                AddMessage('Packing...', True);
             end;
         end;
 
@@ -647,16 +703,15 @@ begin
             Archive.Save;
         except
             on E: Exception do begin
-                AddMessage('Error: See Log for details.', True, True);
-                AddMessage(Format('Error: Couldn''t save Archive File: %s', [E.Message]));
+                AddMessage('Error: Couldn''t save Archive File.', True);
+                AppendStatus('See log for details.');
+
+                AddMessageNoTimeStamp(Format('   %s', [E.Message]));
+                AddMessageNoTimeStamp('');
             end;
         end;
 
-        if thisGame.isBA2 then
-            if settings.Texture then
-                AddMessage('Texture Archive Packing: Done.', True)
-            else AddMessage('Main Archive Packing: Done.', True)
-        else AddMessage('Archive Packing: Done.', True);
+        AddMessage('Done.', True);
 
     finally
         Archive.Free; relList.Free;
@@ -677,9 +732,9 @@ end;
 
 procedure TArchiveThread.Execute;
 var
+    textureFile, tempFile: string;
     mainThread, textThread: TBuildArchiveThread;
     archiveThread: TArchiveWrapperThread;
-    textureFile, tempFile: string;
     TempArchiveFile: TextFile;
     manualCopy: boolean;
 
@@ -696,8 +751,13 @@ begin
         if (thisGame.PluginFile <> nil) then
             thisGame.PluginFile.SaveToFile(TPath.Combine(thisGame.OutputDataPath, thisGame.PluginName));
 
-        if (thisGame.ConfigFile <> nil) then
+        if (thisGame.ConfigFile <> nil) then begin
             thisGame.ConfigFile.SaveToFile(TPath.Combine(thisGame.OutputDataPath, 'BakaFile.ini'));
+            Synchronize(nil, procedure
+            begin
+                BakaWindow.UpdateConfigFile;
+            end);
+        end;
 
         if (mainList.Count > 0) then begin
             settings.Texture := False;
@@ -720,8 +780,7 @@ begin
                 archiveThread.Free;
 
             end else begin
-                settings.Texture  := True;
-                settings.Compress := True;
+                settings.Compress := True; settings.Texture := True;
                 textThread := TBuildArchiveThread.Create(thisGame, textList, settings);
                 textThread.WaitFor;
                 textThread.Free;
@@ -739,17 +798,21 @@ begin
             if CopyFile(PChar(TPath.Combine(thisGame.OutputDataPath, thisGame.PluginName)), PChar(TPath.Combine(thisGame.DataFolderPath, thisGame.PluginName)), False) then
                 AddMessage(Format('Copied %s to Data folder!', [thisGame.PluginName]), True)
             else begin
-                AddMessage(Format('Couldn''t copy %s to Data Folder: %s',
-                    [thisGame.PluginName, SysErrorMessage(GetLastError)]), True);
+                AddMessage(Format('Error: Couldn''t copy [ %s ] to Data Folder.', [thisGame.PluginName]), True);
+                AppendStatus('See log for details.');
+                AddMessageNoTimeStamp(Format('   %s', [SysErrorMessage(GetLastError)]));
+                AddMessageNoTimeStamp('');
                 manualCopy := True;
             end;
 
             if thisGame.configFile <> nil then begin
                 if CopyFile(PChar(TPath.Combine(thisGame.OutputDataPath, 'BakaFile.ini')), PChar(TPath.Combine(thisGame.DataFolderPath, 'BakaFile.ini')), False) then
-                    AddMessage(Format('Copied %s to Data folder!', ['BakaFile.ini']), True)
+                    AddMessage('Copied BakaFile.ini to Data folder!', True)
                 else begin
-                    AddMessage(Format('Couldn''t copy %s to Data Folder: %s',
-                        ['BakaFile.ini', SysErrorMessage(GetLastError)]), True);
+                    AddMessage('Error: Couldn''t copy [ BakaFile.ini ] to Data Folder.', True);
+                    AppendStatus('See log for details.');
+                    AddMessageNoTimeStamp(Format('   %s', [SysErrorMessage(GetLastError)]));
+                    AddMessageNoTimeStamp('');
                     manualCopy := True;
                 end;
             end;
@@ -757,8 +820,10 @@ begin
             if CopyFile(PChar(thisGame.BSAMainPath), PChar(TPath.Combine(thisGame.DataFolderPath, thisGame.BSAMainName)), False) then
                 AddMessage(Format('Copied %s to Data folder!', [thisGame.BSAMainName]), True)
             else begin
-                AddMessage(Format('Couldn''t copy %s to Data Folder: %s',
-                    [thisGame.BSAMainName, SysErrorMessage(GetLastError)]), True);
+                AddMessage(Format('Error: Couldn''t copy [ %s ] to Data Folder.', [thisGame.BSAMainName]), True);
+                AppendStatus('See log for details.');
+                AddMessageNoTimeStamp(Format('   %s', [SysErrorMessage(GetLastError)]));
+                AddMessageNoTimeStamp('');
                 manualCopy := True;
             end;
 
@@ -766,20 +831,22 @@ begin
                 if CopyFile(PChar(thisGame.BSATexturePath), PChar(TPath.Combine(thisGame.DataFolderPath, thisGame.BSATextureName)), False) then
                     AddMessage(Format('Copied %s to Data folder!', [thisGame.BSATextureName]), True)
                 else begin
-                    AddMessage(Format('Couldn''t copy %s to Data Folder: %s',
-                        [thisGame.BSATextureName, SysErrorMessage(GetLastError)]), True);
+                    AddMessage(Format('Error: Couldn''t copy [ %s ] to Data Folder.', [thisGame.BSATextureName]), True);
+                    AppendStatus('See log for details.');
+                    AddMessageNoTimeStamp(Format('   %s', [SysErrorMessage(GetLastError)]));
+                    AddMessageNoTimeStamp('');
                     manualCopy := True;
                 end;
             end;
         end else manualCopy := True;
 
         if manualCopy then begin
-            Prefix := '';
-            AddMessage(Format('Packed files can be found in [ %s ]',
-                [thisGame.OutputDataPath]), True, True);
+            AddMessage(Format('Packed files can be found in [ %s ]', [TPath.Combine('BakaOutput', thisGame.Name)]), True, True);
 
-            AddMessage(Format('Packed files can be found in [ %s ], and can be installed manually, or with a mod manager of your choice.',
-                [TPath.GetFullPath(thisGame.OutputDataPath)]));
+            Prefix := '';
+            AddMessage(Format('Packed files can be found in [ %s ]', [TPath.GetFullPath(thisGame.OutputDataPath)]));
+            AddMessageNoTimeStamp('   They can be installed manually, or with a mod manager of your choice.');
+            AddMessageNoTimeStamp('');
         end;
 
         Destroy;
@@ -790,10 +857,9 @@ constructor TArchiveThread.Create(const thisGame: TBakaGame; const settings: TAr
 begin
     inherited Create;
 
-    self.thisGame := thisGame;
-    self.settings := settings;
-    self.mainList := mainList;
-    self.textList := textList;
+    Prefix := 'Background Archiver: ';
+    self.thisGame := thisGame; self.settings := settings;
+    self.mainList := mainList; self.textList := textList;
 end;
 
 { TArchiveWrapperThread }
@@ -834,15 +900,15 @@ begin
 
         CloseHandle(StdOutPipeWrite);
 
-        if Handle then
+        if Handle then begin
             AddMessage('Starting...', True);
 
             try
                 repeat
                     WasOK := ReadFile(StdOutPipeRead, Buffer, 255, BytesRead, nil);
-                    AddMessage('Packing Texture Archive File...');
+                    AddMessage('Packing...');
 
-                    if BytesRead > 0 then begin
+                    if (BytesRead > 0) then begin
                         Buffer[BytesRead] := #0;
                         AddMessage(Trim(String(Buffer)));
                     end;
@@ -853,8 +919,9 @@ begin
             finally
                 CloseHandle(PI.hThread);
                 CloseHandle(PI.hProcess);
-                AddMessage('Texture Archive Packing: Done.', True);
+                AddMessage('Done.', True);
             end;
+        end;
 
     finally
         CloseHandle(StdOutPipeRead);
@@ -866,7 +933,7 @@ constructor TArchiveWrapperThread.Create(const archivePath: string; const inputF
 begin
     inherited Create;
 
-    Prefix := 'Archive2: ';
+    Prefix := 'Background Archiver: Archive2: ';
 
     fileLines := TStringList.Create;
     fileLines.LoadFromFile(inputFilePath);
@@ -903,7 +970,7 @@ begin
                         SettingArchivePath.Text := FileName; archivePath := FileName;
                         SettingArchive2.Enabled := True;
                     end else begin
-                        AddMessage('Invalid Archive2 Path Selected!', True);
+                        AddMessage('Error: Invalid Archive2 Path Selected!', True);
                     end;
                 end;
             end;
@@ -922,6 +989,7 @@ begin
             GameSelectUpdate(GameSelect.ItemIndex, True);
     end;
 
+    SettingFilterDirty := True;
     zzFilterInput.Clear;
 end;
 
@@ -937,13 +1005,37 @@ begin
         SendMessage(Console.Handle, EM_LINESCROLL, 0, Console.Lines.Count);
 end;
 
-procedure TBakaWindow.AppendMessage(const Addition: string);
+procedure TBakaWindow.AppendMessage(const Addition: string; const Spacer: string);
 var
     Original: string;
 
 begin
     Original := Console.Lines[Pred(Console.Lines.Count)];
-    Console.Lines[Pred(Console.Lines.Count)] := Original + Addition;
+    Console.Lines[Pred(Console.Lines.Count)] := Format('%s%s%s', [Original, Spacer, Addition]);
+end;
+
+procedure TBakaWindow.AppendStatus(const Addition: string; const Spacer: string);
+var
+    Original: string;
+
+begin
+    Original := StatusBar.Panels[0].Text;
+    StatusBar.Panels[0].Text := Format('%s%s%s', [Original, Spacer, Addition]);
+end;
+
+procedure TBakaWindow.DefaultGameSelectChange(Sender: TObject);
+begin
+    SettingDefaultIndex := DefaultGameSelect.ItemIndex;
+    SettingMasterIndex := MasterList.IndexOf(ActiveList[SettingDefaultIndex]);
+end;
+
+procedure TBakaWindow.DefaultGameSelectUpdate;
+begin
+    GameSelect.ItemIndex := SettingDefaultIndex;
+    DefaultGameSelect.ItemIndex := SettingDefaultIndex;
+    GameSelectUpdate(SettingDefaultIndex);
+
+    AddMessage('I-it''s not like I want to pack your files or anything!!', True, True);
 end;
 
 procedure TBakaWindow.FormCreate(Sender: TObject);
@@ -952,12 +1044,13 @@ var
 
 begin
     AddMessage(Format('BakaFileTool (%s) starting session %s', [
-        GetFileVersion(Application.ExeName),
+        GetFileVersion(TPath.Combine(GetCurrentDir, Application.ExeName)),
         FormatDateTime('yyyy-mm-dd hh:nn:ss', Now)]));
 
-    BannedFileNamePaths := ['.ba2', '.bak', '.bik', '.bk2', '.bsa', '.btd', '.cdf', '.dat', '.db', '.dll', '.esl',
-                            '.esm', '.esp', '.exe', '.nam', '.rar', '.sdp', '.zip', 'MWSE', 'OBSE', 'FOSE', 'FOSE',
-                            'NVSE', 'SKSE', 'F4SE', 'DialogueViews', 'Edit Backups', 'Edit Cache', '.7z'];
+    BannedFileNames   := ['.ba2', '.bak', '.bik', '.bk2', '.bsa', '.btd', '.cdf', '.dat', '.db', '.dll', '.esl',
+                          '.esm', '.esp', '.exe', '.nam', '.rar', '.sdp', '.zip', '.7z'];
+
+    BannedFolderPaths := ['MWSE', 'OBSE', 'FOSE', 'NVSE', 'SKSE', 'F4SE', 'DialogueViews', 'Edit Backups', 'Edit Cache'];
 
     archiveList := TStringList.Create;
     textureList := TStringList.Create;
@@ -965,83 +1058,18 @@ begin
     ActiveList  := TList<TBakaGame>.Create;
 
     LoadSettings;
-
-    with AddWrapper(MasterList, 'GRID', 'Gridiron!', baTES3) do begin
-        // Placeholder for <Select Game>
-    end;
-
-    with AddWrapper(MasterList, 'TES5', 'Skyrim', baFO3) do begin
-        PluginName      := 'BakaFile.esm';
-        PluginFile      := BakaFileTES5;
-        SelectButton    := TES5PathSelectButton;
-        SelectBox       := SettingTES5Path;
-        Initialize;
-    end;
-
-    with AddWrapper(MasterList, 'SSE', 'Skyrim Special Edition', baSSE) do begin
-        ConfigFileName  := 'Skyrim';
-        DataFileName    := 'Skyrim';
-        PluginName      := 'BakaFile.esl';
-        PluginFile      := BakaFileSSE;
-        SelectButton    := SSEPathSelectButton;
-        SelectBox       := SettingSSEPath;
-        Initialize;
-    end;
-
-    with AddWrapper(MasterList, 'SSEVR', 'Skyrim VR', baSSE) do begin
-        ConfigFileName  := 'Skyrim';
-        DataFileName    := 'Skyrim';
-        PluginName      := 'BakaFile.esm';
-        PluginFile      := BakaFileSSEVR;
-        SelectButton    := SSEVRPathSelectButton;
-        SelectBox       := SettingSSEVRPath;
-        Initialize;
-    end;
-
-    with AddWrapper(MasterList, 'FO4', 'Fallout 4', baFO4, True) do begin
-        SetAllNames('Fallout4');
-        PluginName      := 'BakaFile.esl';
-        PluginFile      := BakaFileFO4;
-        ConfigFile      := BakaCfgFO4;
-        SelectButton    := FO4PathSelectButton;
-        SelectBox       := SettingFO4Path;
-        Initialize;
-    end;
-
-    with AddWrapper(MasterList, 'FO4VR', 'Fallout 4 VR', baFO4, True) do begin
-        SetAllNames('Fallout4VR');
-        ConfigFileName  := 'Fallout4';
-        DataFileName    := 'Fallout4';
-        PluginName      := 'BakaFile.esm';
-        PluginFile      := BakaFileFO4VR;
-        ConfigFile      := BakaCfgFO4VR;
-        SelectButton    := FO4VRPathSelectButton;
-        SelectBox       := SettingFO4VRPath;
-        Initialize;
-    end;
-
-    with AddWrapper(MasterList, 'FO76', 'Fallout 76', baFO4, True) do begin
-        ConfigFolderName:= 'Fallout 76';
-        RegKeyName      := 'Fallout 76';
-        ConfigFileName  := 'Fallout76';
-        AppDataName     := 'Fallout76';
-        DataFileName    := 'SeventySix';
-        PluginName      := 'BakaFile.esm';
-        PluginFile      := BakaFileFO76;
-        ConfigFile      := BakaCfgFO76;
-        SelectButton    := FO76PathSelectButton;
-        SelectBox       := SettingFO76Path;
-        isAlternativeRegPath := True;
-        Initialize;
-    end;
+    InitMasterList;
 
     SettingsBlock.Top := 5;
 
     if SettingMaximized.Checked then
         WindowState := wsMaximized;
 
-    if (zzFilterBox.Items.Count = 0) then
+    if (zzFilterBox.Items.Count = 0) and not SettingFilterDirty then
         zzFilterBox.Items.Insert(0, 'Scripts\Source\');
+
+    DefaultGameSelect.Items.Add('<no default>');
+    DefaultGameSelect.ItemIndex := 0;
 
     GameSelect.Items.Add('<select game>');
     GameSelect.ItemIndex := 0;
@@ -1051,6 +1079,7 @@ begin
     for i := 1 to Pred(MasterList.Count) do begin
         if MasterList[i].isValidPath then begin
             GameSelect.Items.Add(MasterList[i].Name);
+            DefaultGameSelect.Items.Add(MasterList[i].Name);
             ActiveList.Add(MasterList[i]);
 
         end else begin
@@ -1059,18 +1088,20 @@ begin
 
             if MasterList[i].isValidPath then begin
                 GameSelect.Items.Add(MasterList[i].Name);
+                DefaultGameSelect.Items.Add(MasterList[i].Name);
                 ActiveList.Add(MasterList[i]);
 
-            end else if SettingWarnMissing.Checked then begin
-                AddMessage(Format('%s''s manually specificed path is incorrect!', [MasterList[i].Name]));
-            end;
+            end else if SettingWarnMissing.Checked then
+                if (MasterList[i].SelectBox.Text <> '') then
+                    AddMessage(Format('Error: %s''s manually specificed path is incorrect!', [MasterList[i].Name]));
 
             if (not MasterList[i].isValidPath and SettingWarnMissing.Checked) then begin
-                AddMessage(Format('%s was not detected!', [MasterList[i].Name]));
+                    AddMessage(Format('Warning: %s was not detected!', [MasterList[i].Name]));
 
                 if MatchText(MasterList[i].ShortName, ['FO76']) then
-                    AppendMessage(' Run Scan and Repair in the Bethesda.net Launcher to restore registry keys.')
-                else AppendMessage(' Run its launcher to restore registry keys.');
+                    AddMessage('   Run Scan and Repair in the Bethesda.net Launcher to restore registry keys.')
+                else AddMessage('   Run its launcher through Steam to restore registry keys.');
+                AddMessage('');
             end;
         end;
 
@@ -1084,14 +1115,14 @@ begin
         archivePath := SettingArchivePath.Text;
         if not FileExists(archivePath) then begin
             if SettingWarnMissing.Checked then
-                AddMessage('Archive2''s manually specificed path is incorrect!');
+                AddMessage('Error: Archive2''s manually specificed path is incorrect!');
 
             SettingArchive2.Enabled := False;
         end;
 
         if not FileExists(archivePath) then begin
             if SettingWarnMissing.Checked then
-                AddMessage('Archive2 was not detected! Fallout 76 texture building will be done with BSArch.');
+                AddMessage('Warning: Archive2 was not detected! Fallout 76 texture building will be done with BSArch.');
 
             SettingArchive2.Enabled := False;
             SettingArchivePath.Clear;
@@ -1105,8 +1136,49 @@ begin
         SettingArchive2.Enabled := True;
     end;
 
-    AddMessage('I-it''s not like I want to pack your files or anything!!', True, True);
-    GameSelectUpdate(0);
+    if (SettingDefaultIndex < Pred(ActiveList.Count)) and (SettingMasterIndex < Pred(MasterList.Count)) then begin
+        if SameText(ActiveList[SettingDefaultIndex].ShortName, MasterList[SettingMasterIndex].ShortName) then begin
+            DefaultGameSelectUpdate;
+
+        end else if (ActiveList.IndexOf(MasterList[SettingMasterIndex]) > -1) then begin
+            SettingDefaultIndex := ActiveList.IndexOf(MasterList[SettingMasterIndex]);
+            DefaultGameSelectUpdate
+
+        end else begin
+            AddMessage(Format('Error: Default Game (%s) was not detected to be loaded!', [MasterList[SettingMasterIndex].Name]), True);
+            AppendStatus('See log for more details.');
+
+            if not SettingWarnMissing.Checked then begin
+                if MatchText(MasterList[SettingMasterIndex].ShortName, ['FO76']) then
+                    AddMessage('   Try running Scan and Repair in the Bethesda.net Launcher to restore registry keys.')
+                else AddMessage('   Try running its launcher to restore registry keys.');
+            end else begin
+                AddMessage('   See above for instructions on how to reset its registry keys.');
+            end;
+
+            AddMessage('   Alternatively, try setting the game''s path manually in the Paths tab.');
+            AddMessage('   Or reset your default game setting in the Settings tab.');
+            AddMessage('');
+
+            GameSelectUpdate(0);
+        end;
+    end else if (SettingMasterIndex < Pred(MasterList.Count)) then begin
+        if (ActiveList.IndexOf(MasterList[SettingMasterIndex]) > -1) then begin
+            SettingDefaultIndex := ActiveList.IndexOf(MasterList[SettingMasterIndex]);
+            DefaultGameSelectUpdate
+        end;
+    end;
+
+    if (thisGame = nil) then begin
+        AddMessage('Error: Invalid Default Game selected!', True);
+        AppendStatus('See log for more details.');
+
+        AddMessage('   An invalid game is currently selected as the default.');
+        AddMessage('   Please reset your default game setting in the Settings tab.');
+        AddMessage('');
+
+        GameSelectUpdate(0);
+    end;
 end;
 
 procedure TBakaWindow.FormDestroy(Sender: TObject);
@@ -1141,6 +1213,82 @@ begin
     BlockText01.Top := Floor((SettingsBlock.Height - combHeight) / 3) - 30;
     BlockText02.Top := Floor((SettingsBlock.Height - combHeight) / 3) - 2;
     BlockText03.Top := Floor((SettingsBlock.Height - combHeight) / 3) + 15;
+end;
+
+procedure TBakaWindow.InitMasterList;
+begin
+    with AddWrapper(MasterList, 'GRID', 'Gridiron!', baTES3) do begin
+        // Placeholder for <Select Game>
+    end;
+
+    with AddWrapper(MasterList, 'TES5', 'Skyrim', baFO3) do begin
+        PluginName      := 'BakaFile.esm';
+        PluginFile      := BakaFileTES5;
+        SelectButton    := TES5PathSelectButton;
+        SelectBox       := SettingTES5Path;
+        ExecutableName  := 'TESV';
+        Initialize;
+    end;
+
+    with AddWrapper(MasterList, 'SSE', 'Skyrim Special Edition', baSSE) do begin
+        ConfigFileName  := 'Skyrim';
+        DataFileName    := 'Skyrim';
+        PluginName      := 'BakaFile.esl';
+        PluginFile      := BakaFileSSE;
+        SelectButton    := SSEPathSelectButton;
+        SelectBox       := SettingSSEPath;
+        ExecutableName  := 'SkyrimSE';
+        Initialize;
+    end;
+
+    with AddWrapper(MasterList, 'SSEVR', 'Skyrim VR', baSSE) do begin
+        ConfigFileName  := 'Skyrim';
+        DataFileName    := 'Skyrim';
+        PluginName      := 'BakaFile.esm';
+        PluginFile      := BakaFileSSEVR;
+        SelectButton    := SSEVRPathSelectButton;
+        SelectBox       := SettingSSEVRPath;
+        ExecutableName  := 'SkyrimVR';
+        Initialize;
+    end;
+
+    with AddWrapper(MasterList, 'FO4', 'Fallout 4', baFO4, True) do begin
+        SetAllNames('Fallout4');
+        PluginName      := 'BakaFile.esl';
+        PluginFile      := BakaFileFO4;
+        ConfigFile      := BakaCfgFO4;
+        SelectButton    := FO4PathSelectButton;
+        SelectBox       := SettingFO4Path;
+        Initialize;
+    end;
+
+    with AddWrapper(MasterList, 'FO4VR', 'Fallout 4 VR', baFO4, True) do begin
+        SetAllNames('Fallout4VR');
+        ConfigFileName  := 'Fallout4';
+        DataFileName    := 'Fallout4';
+        PluginName      := 'BakaFile.esm';
+        PluginFile      := BakaFileFO4VR;
+        ConfigFile      := BakaCfgFO4VR;
+        SelectButton    := FO4VRPathSelectButton;
+        SelectBox       := SettingFO4VRPath;
+        Initialize;
+    end;
+
+    with AddWrapper(MasterList, 'FO76', 'Fallout 76', baFO4, True) do begin
+        ConfigFolderName := 'Fallout 76';
+        RegKeyName       := 'Fallout 76';
+        ConfigFileName   := 'Fallout76';
+        AppDataName      := 'Fallout76';
+        DataFileName     := 'SeventySix';
+        PluginName       := 'BakaFile.esm';
+        PluginFile       := BakaFileFO76;
+        ConfigFile       := BakaCfgFO76;
+        SelectButton     := FO76PathSelectButton;
+        SelectBox        := SettingFO76Path;
+        ExecutableName   := 'Fallout76';
+        isAlternativeRegPath := True;
+        Initialize;
+    end;
 end;
 
 procedure TBakaWindow.InitWindowSettings;
@@ -1181,7 +1329,7 @@ end;
 procedure TBakaWindow.GameSelectUpdate(GameIndex: Integer; const Force: boolean);
 var
     buildFileThread: TBuildFileThread;
-    filterList: TStringList;
+    fileFilter, folderFilter: TStringList;
     filter: string;
 
 begin
@@ -1205,18 +1353,21 @@ begin
 
         GamePath.Text := thisGame.GetDataPath;
 
-        filterList := TStringList.Create;
-        for filter in BannedFileNamePaths do filterList.Add(filter);
-        for filter in zzFilterBox.Items do filterList.Add(filter);
+        fileFilter := TStringList.Create;
+        for filter in BannedFileNames do fileFilter.Add(filter);
 
-        buildFileThread := TBuildFileThread.Create(filterList);
-        // filterList.Free;
+        folderFilter := TStringList.Create;
+        for filter in BannedFolderPaths do folderFilter.Add(filter);
+        for filter in zzFilterBox.Items do folderFilter.Add(filter);
+
+        buildFileThread := TBuildFileThread.Create(fileFilter, folderFilter);
+        SettingAdvancedClick(nil);
 
     end else begin
         SettingDataManual.Enabled := False;
-        SelectButton.Enabled   := False;
-        RefreshButton.Enabled  := False;
-        RunButton.Enabled      := False;
+        SelectButton.Enabled      := False;
+        RefreshButton.Enabled     := False;
+        RunButton.Enabled         := False;
 
         GamePath.Text := '';
     end;
@@ -1230,42 +1381,50 @@ var
     Flag: integer;
 
 begin
-    Settings := TMemINIFile.Create('settings.baka');
+    Settings := TMemINIFile.Create(TPath.Combine(GetCurrentDir, 'settings.baka'));
     Filters := TStringList.Create;
 
     try
-        SettingAdvanced.Checked     := Settings.ReadBool('General', 'bArchiveFlags',    False);
-        SettingAutoCopy.Checked     := Settings.ReadBool('General', 'bAutoCopy',        False);
-        SettingAutoRefresh.Checked  := Settings.ReadBool('General', 'bAutoRefresh',     False);
-        SettingAutoScroll.Checked   := Settings.ReadBool('General', 'bAutoScroll',      False);
-        SettingShare.Checked        := Settings.ReadBool('General', 'bBinaryShare',     False);
-        SettingCompress.Checked     := Settings.ReadBool('General', 'bCompress',        False);
-        SettingDataManual.Checked   := Settings.ReadBool('General', 'bManualSelect',    False);
-        SettingMaximized.Checked    := Settings.ReadBool('General', 'bMaximized',       False);
-        SettingThreaded.Checked     := Settings.ReadBool('General', 'bMultiThreading',  False);
-        SettingSaveLog.Checked      := Settings.ReadBool('General', 'bSaveLog',         True);
-        SettingArchive2.Checked     := Settings.ReadBool('General', 'bUseArchive2',     False);
-        SettingWarnMissing.Checked  := Settings.ReadBool('General', 'bWarnMissing',     True);
+        SettingAdvanced.Checked       := Settings.ReadBool('General', 'bArchiveFlags',    False);
+        SettingAutoCopy.Checked       := Settings.ReadBool('General', 'bAutoCopy',        False);
+        SettingAutoRefresh.Checked    := Settings.ReadBool('General', 'bAutoRefresh',     False);
+        SettingAutoScroll.Checked     := Settings.ReadBool('General', 'bAutoScroll',      False);
+        SettingShare.Checked          := Settings.ReadBool('General', 'bBinaryShare',     False);
+        SettingCompress.Checked       := Settings.ReadBool('General', 'bCompress',        False);
+        SettingFilterDirty            := Settings.ReadBool('General', 'bFilterDirty',     False);
+        SettingDataManual.Checked     := Settings.ReadBool('General', 'bManualSelect',    False);
+        SettingMaximized.Checked      := Settings.ReadBool('General', 'bMaximized',       False);
+        SettingThreaded.Checked       := Settings.ReadBool('General', 'bMultiThreading',  False);
+        SettingRelativePaths.Checked  := Settings.ReadBool('General', 'bRelativePaths',   False);
+        SettingSaveLog.Checked        := Settings.ReadBool('General', 'bSaveLog',         True);
+        SettingArchive2.Checked       := Settings.ReadBool('General', 'bUseArchive2',     False);
+        SettingWarnMissing.Checked    := Settings.ReadBool('General', 'bWarnMissing',     True);
+
+        SettingDefaultIndex           := Settings.ReadInteger('DefaultGame', 'iActive', 0);
+        if (SettingDefaultIndex < 0) then SettingDefaultIndex := 0;
+
+        SettingMasterIndex            := Settings.ReadInteger('DefaultGame', 'iMaster', 0);
+        if (SettingMasterIndex < 0) then SettingMasterIndex := 0;
 
         if Settings.ReadBool('General', 'bLewdMode', False) then
-            AddMessage('Please don''t lewd me senpai!');
+            AddMessage('Please don''t lewd me senpai!!');
 
-        SettingArchivePath.Text     := Settings.ReadString('Paths', 'sArchivePath',     '');
-        SettingFO4Path.Text         := Settings.ReadString('Paths', 'sFO4Path',         '');
-        SettingFO4VRPath.Text       := Settings.ReadString('Paths', 'sFO4VRPath',       '');
-        SettingFO76Path.Text        := Settings.ReadString('Paths', 'sFO76Path',        '');
-        SettingTES5Path.Text        := Settings.ReadString('Paths', 'sTES5Path',        '');
-        SettingSSEPath.Text         := Settings.ReadString('Paths', 'sSSEPath',         '');
-        SettingSSEVRPath.Text       := Settings.ReadString('Paths', 'sSSEVRPath',       '');
+        SettingArchivePath.Text := Settings.ReadString('Paths', 'sArchivePath', '');
+        SettingFO4Path.Text     := Settings.ReadString('Paths', 'sFO4Path',     '');
+        SettingFO4VRPath.Text   := Settings.ReadString('Paths', 'sFO4VRPath',   '');
+        SettingFO76Path.Text    := Settings.ReadString('Paths', 'sFO76Path',    '');
+        SettingTES5Path.Text    := Settings.ReadString('Paths', 'sTES5Path',    '');
+        SettingSSEPath.Text     := Settings.ReadString('Paths', 'sSSEPath',     '');
+        SettingSSEVRPath.Text   := Settings.ReadString('Paths', 'sSSEVRPath',   '');
 
         InitWindowSettings;
 
         Flag := Settings.ReadInteger('Flags', 'Archive', 0);
-        if Flag = 0 then SettingArchiveFlags.Text := ''
+        if Flag <= 0 then SettingArchiveFlags.Text := ''
         else SettingArchiveFlags.Text := IntToHex(Flag, 8);
 
         Flag := Settings.ReadInteger('Flags', 'File', 0);
-        if Flag = 0 then SettingFileFlags.Text := ''
+        if Flag <= 0 then SettingFileFlags.Text := ''
         else SettingFileFlags.Text := IntToHex(Flag, 8);
 
         Settings.ReadSection('Filter', Filters);
@@ -1314,27 +1473,45 @@ begin
         end;
     end;
 
-    GameSelect.Items.Clear; GameSelect.Items.Add('<select game>');
-    ActiveList.Clear; ActiveList.Add(MasterList[0]);
+    GameSelect.Items.Clear;
+    DefaultGameSelect.Items.Clear;
+
+    GameSelect.Items.Add('<select game>');
     GameSelect.ItemIndex := 0;
+
+    DefaultGameSelect.Items.Add('<no default>');
+    DefaultGameSelect.ItemIndex := 0;
+
+    ActiveList.Clear;
+    ActiveList.Add(MasterList[0]);
 
     for i := 1 to Pred(MasterList.Count) do begin
         if MasterList[i].isValidPath then begin
-            GameSelect.Items.Add(MasterList[i].Name); ActiveList.Add(MasterList[i]);
+            GameSelect.Items.Add(MasterList[i].Name);
+            DefaultGameSelect.Items.Add(MasterList[i].Name);
+            ActiveList.Add(MasterList[i]);
             MasterList[i].SelectBox.Text := MasterList[i].GetRootPath;
 
-            if (thisGame <> nil) then begin
-                if SameText(thisGame.ShortName, MasterList[i].ShortName) then begin
-                    GameSelect.ItemIndex := Pred(ActiveList.Count);
-                end;
+        end else begin
+            if SameText(SelectedGame.ShortName, MasterList[i].ShortName) then begin
+                AddMessage(Format('Error: %s''s Data folder was not found in the specified path!', [MasterList[i].Name]), True);
+                AppendStatus('See log for more details.');
+
+                AddMessage(Format('   The selected path is not the correct path for %s', [MasterList[i].Name]));
+                AddMessage('   You should be selecting the root folder for the game, not the Data folder.');
+
+                AddMessage('');
             end;
-        end else
-            if SameText(SelectedGame.ShortName, MasterList[i].ShortName) then
-                AddMessage(Format('Data\%s was not found in the specified path!', [MasterList[i].DataFileName]), True);
+        end;
     end;
 
-    if (thisGame <> nil) then
+    SettingDefaultIndex := ActiveList.IndexOf(MasterList[SettingMasterIndex]);
+    DefaultGameSelect.ItemIndex := SettingDefaultIndex;
+
+    if (thisGame <> nil) then begin
+        GameSelect.ItemIndex := max(ActiveList.IndexOf(thisGame), 0);
         GameSelectUpdate(GameSelect.ItemIndex);
+    end;
 end;
 
 procedure TBakaWindow.RefreshButtonClick(Sender: TObject);
@@ -1355,11 +1532,13 @@ begin
 
     if SettingAutoRefresh.Checked then
         GameSelectUpdate(GameSelect.ItemIndex, True);
+
+    SettingFilterDirty := True;
 end;
 
 procedure TBakaWindow.ResetButtonClick(Sender: TObject);
 begin
-    if DeleteFile(PChar('settings.baka')) then begin
+    if DeleteFile(PChar(TPath.Combine(GetCurrentDir, 'settings.baka'))) then begin
         zzFilterBox.Clear;
         LoadSettings;
 
@@ -1382,7 +1561,7 @@ begin
         Compress    := SettingCompress.Checked;
         BinShare    := SettingShare.Checked;
         MultiThread := SettingThreaded.Checked;
-        UseFlags    := SettingAdvanced.Checked;
+        UseFlags    := SettingAdvanced.Checked and SettingAdvanced.Enabled;
         UseArchive2 := SettingArchive2.Checked and SettingArchive2.Enabled;
 
         if SameText(Trim(SettingArchiveFlags.Text), '') then
@@ -1405,7 +1584,7 @@ var
     i: integer;
 
 begin
-    Settings := TMemINIFile.Create('settings.baka');
+    Settings := TMemINIFile.Create(TPath.Combine(GetCurrentDir, 'settings.baka'));
     Filters := TStringList.Create;
 
     try
@@ -1416,12 +1595,17 @@ begin
         Settings.WriteBool('General', 'bBinaryShare',       SettingShare.Checked);
         Settings.WriteBool('General', 'bCompress',          SettingCompress.Checked);
         Settings.WriteBool('General', 'bLewdMode',          False);
+        Settings.WriteBool('General', 'bFilterDirty',       SettingFilterDirty);
         Settings.WriteBool('General', 'bManualSelect',      SettingDataManual.Checked);
         Settings.WriteBool('General', 'bMaximized',         SettingMaximized.Checked);
         Settings.WriteBool('General', 'bMultiThreading',    SettingThreaded.Checked);
+        Settings.WriteBool('General', 'bRelativePaths',     SettingRelativePaths.Checked);
         Settings.WriteBool('General', 'bSaveLog',           SettingSaveLog.Checked);
         Settings.WriteBool('General', 'bUseArchive2',       SettingArchive2.Checked);
         Settings.WriteBool('General', 'bWarnMissing',       SettingWarnMissing.Checked);
+
+        Settings.WriteInteger('DefaultGame', 'iActive',     SettingDefaultIndex);
+        Settings.WriteInteger('DefaultGame', 'iMaster',     SettingMasterIndex);
 
         Settings.WriteString('Paths', 'sArchivePath',       SettingArchivePath.Text);
         Settings.WriteString('Paths', 'sFO4Path',           SettingFO4Path.Text);
@@ -1475,11 +1659,27 @@ end;
 
 procedure TBakaWindow.SettingAdvancedClick(Sender: TObject);
 begin
-    AdvancedSettings.Enabled    := SettingAdvanced.Checked;
-    SettingArchiveFlags.Enabled := SettingAdvanced.Checked;
-    SettingFileFlags.Enabled    := SettingAdvanced.Checked;
-    ArchiveFlags.Enabled        := SettingAdvanced.Checked;
-    FileFlags.Enabled           := SettingAdvanced.Checked;
+    if (thisGame <> nil) then begin
+        if (thisGame.BSAType = baFO3) then begin
+
+            AdvancedSettings.Enabled    := True;
+            SettingAdvanced.Enabled     := True;
+
+            SettingArchiveFlags.Enabled := SettingAdvanced.Checked;
+            ArchiveFlags.Enabled        := SettingAdvanced.Checked;
+
+            SettingFileFlags.Enabled    := SettingAdvanced.Checked;
+            FileFlags.Enabled           := SettingAdvanced.Checked;
+
+        end else begin
+            AdvancedSettings.Enabled := False;
+            SettingAdvanced.Enabled := False;
+        end;
+
+    end else begin
+        AdvancedSettings.Enabled := False;
+        SettingAdvanced.Enabled := False;
+    end;
 end;
 
 procedure TBakaWindow.SettingAutoScrollClick(Sender: TObject);
@@ -1491,6 +1691,44 @@ end;
 procedure TBakaWindow.SettingDataManualClick(Sender: TObject);
 begin
     SelectButton.Enabled := SettingDataManual.Checked;
+end;
+
+procedure TBakaWindow.SettingRelativePathsClick(Sender: TObject);
+begin
+    if (FileListBox.Lines.Count > 0) then
+      RefreshButtonClick(nil);
+end;
+
+procedure TBakaWindow.UpdateConfigFile;
+var
+    settings: TMemINIFile;
+    configName, configString: string;
+    configArray: array of string;
+
+begin
+    if (thisGame.ConfigFile = nil) then Exit;
+
+    SetLength(configArray, 2);
+    configArray[0] := thisGame.ConfigCustomPath;
+    configArray[1] := thisGame.ConfigPath;
+
+    for configName in configArray do begin
+        if FileExists(configName) then begin
+            settings := TMemINIFile.Create(configName);
+            configString := settings.ReadString('Archive', 'sResourceStartUpArchiveList', '');
+
+            if not configString.IsEmpty then begin
+                settings := TMemINIFile.Create(TPath.Combine(thisGame.OutputDataPath, 'BakaFile.ini'));
+                settings.WriteString('Archive', 'sResourceStartUpArchiveList',
+                    Format('%s, %s', [configString, thisGame.BSAMainName]));
+                settings.UpdateFile;
+
+                AddMessage(Format('Updated BakaFile.ini with values from %s.', [TPath.GetFileName(configName)]), True);
+                // AddMessage('BakaFile.ini should not be edited manually!');
+                Break;
+            end;
+        end;
+    end;
 end;
 
 procedure TBakaWindow.UpdatePluginFile;
@@ -1571,7 +1809,7 @@ begin
             WriteLn(pluginFile, '# Please don''t get the wrong idea!');
 
             for fileLine in fileLines do
-                if not (fileLine[1] in ['#']) then
+                if not CharInSet(fileLine[1], ['#']) then
                     WriteLn(pluginFile, fileLine);
 
             CloseFile(pluginFile);
@@ -1579,7 +1817,7 @@ begin
         end;
     end;
 
-    If changedFile then AddMessage(Format('Updated %s''s Plugins.txt file!', [thisGame.Name]), True);
+    // if changedFile then AddMessage(Format('Updated %s''s Plugins.txt file!', [thisGame.Name]), True);
 end;
 
 end.

@@ -1,3 +1,18 @@
+# 2.4.0
+### Additions
+* Added a setting to display file paths relative to the Data folder.
+* Added a setting to select a default game, loaded when Baka File Tool starts.
+### Changes
+* Fixed a bug that caused file paths containing ".esm" from being indexed.
+* Fixed a bug that could cause erranous output and settings file paths.
+* Fixed a bug that was preventing some text from being added to the log.
+* Fixed a bug that caused the User Blacklist to reset to default when it shouldn't.
+* Slightly increased the minimum size of the window.
+* Slightly adjusted the Settings tab layout.
+* Slightly adjusted the Tool tab layout.
+* Updated Error messages to be more readable.
+* Updated BSArch with new commits from xEdit-master. Archive2 is still supported for those who prefer it.
+
 # 2.3.0
 ### Additions
 * First GitHub release

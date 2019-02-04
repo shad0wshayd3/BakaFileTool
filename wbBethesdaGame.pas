@@ -25,6 +25,8 @@ type
             ConfigFileName,
             ConfigFolderName,
             ConfigPath,
+            ConfigCustomName,
+            ConfigCustomPath,
             DataFileName,
             DataFilePath,
             DataFolderName,
@@ -32,7 +34,9 @@ type
             RootFolderPath,
             AppDataName,
             AppDataPath,
-            RegKeyName: string;
+            RegKeyName,
+            ExecutableName,
+            ExecutablePath: string;
 
             isAlternativeRegPath,
             isValidPath: boolean;
@@ -73,6 +77,7 @@ begin
     DataFileName     := Name;
     AppDataName      := Name;
     RegKeyName       := Name;
+    ExecutableName   := Name;
 end;
 
 procedure TBethesdaGame.GetDataFolderPath;
@@ -115,13 +120,18 @@ begin
     RootFolderPath := DataFolderPath;
     DataFolderPath := TPath.Combine(DataFolderPath, DataFolderName);
 
+    ExecutableName := ExecutableName + '.exe';
+    ExecutablePath := TPath.Combine(RootFolderPath, ExecutableName);
+
     DataFileName := DataFileName + '.esm';
     DataFilePath := TPath.Combine(DataFolderPath, DataFileName);
 
     isValidPath := FileExists(DataFilePath);
 
+    ConfigCustomName := ConfigFileName + 'Custom.ini';
     ConfigFileName := ConfigFileName + '.ini';
     ConfigFolderName := TPath.Combine(ConfigPath, ConfigFolderName);
+    ConfigCustomPath := TPath.Combine(ConfigFolderName, ConfigCustomName);
     ConfigPath := TPath.Combine(ConfigFolderName, ConfigFileName);
 
     AppDataPath := TPath.Combine(AppDataPath, AppDataName);
