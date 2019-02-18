@@ -1,6 +1,7 @@
 # 2.6.0
 ### Additions
 * Enderal: Forgotton Stories standalone release support
+* Added a program icon
 ### Changes
 * Compiled with Delphi 10.3
 
