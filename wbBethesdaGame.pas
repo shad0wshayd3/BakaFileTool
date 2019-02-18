@@ -68,7 +68,7 @@ begin
 
     RegKeyName        := Name;
     RegKeyPath        := sBethRegKey;
-    RegKeyKey         := 'Path';
+    RegKeyKey         := 'Installed Path';
 
     RegRootKey        := HKEY_LOCAL_MACHINE;
 
