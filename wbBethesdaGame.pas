@@ -9,10 +9,9 @@ uses
     Winapi.Windows;
 
 const
-    sDefaultRegKey     = '\SOFTWARE\Bethesda Softworks\';
-    sDefaultRegKey64   = '\SOFTWARE\WOW6432Node\Bethesda Softworks\';
-    sAlternateRegKey   = '\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\';
-    sAlternateRegKey64 = '\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\';
+    sBethRegKey       = '\SOFTWARE\Bethesda Softworks\';
+    sUninstallRegKey  = '\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\';
+    sSureAIRegKey     = '\Software\SureAI\';
 
 type
     TBethesdaGame = Class(TObject)
@@ -35,10 +34,13 @@ type
             AppDataName,
             AppDataPath,
             RegKeyName,
+            RegKeyPath,
+            RegKeyKey,
             ExecutableName,
             ExecutablePath: string;
 
-            isAlternativeRegPath,
+            RegRootKey: Cardinal;
+
             isValidPath: boolean;
 
             procedure SetAllNames(const Name: string);
@@ -51,22 +53,25 @@ implementation
 
 constructor TBethesdaGame.Create(const ShortName: string; const Name: string; const autoInit: boolean);
 begin
-    self.ShortName   := ShortName;
-    self.Name        := Name;
+    self.ShortName    := ShortName;
+    self.Name         := Name;
 
-    ConfigFileName   := Name;
-    ConfigFolderName := Name;
-    ConfigPath       := TPath.Combine(TPath.GetDocumentsPath(), 'My Games');
+    ConfigFileName    := Name;
+    ConfigFolderName  := Name;
+    ConfigPath        := TPath.Combine(TPath.GetDocumentsPath(), 'My Games');
 
-    DataFolderName   := 'Data';
-    DataFileName     := Name;
+    DataFolderName    := 'Data';
+    DataFileName      := Name;
 
-    AppDataName      := Name;
-    AppDataPath      := TPath.GetCachePath();
+    AppDataName       := Name;
+    AppDataPath       := TPath.GetCachePath();
 
-    RegKeyName       := Name;
+    RegKeyName        := Name;
+    RegKeyPath        := sBethRegKey;
+    RegKeyKey         := 'Path';
 
-    isAlternativeRegPath := False;
+    RegRootKey        := HKEY_LOCAL_MACHINE;
+
     if autoInit then Initialize;
 end;
 
@@ -82,28 +87,23 @@ end;
 
 procedure TBethesdaGame.GetDataFolderPath;
 var
-    RegPath, RegPath64, RegPathKey: string;
+    RegPath: string;
 
 begin
-    if not isAlternativeRegPath then begin
-        RegPath    := TPath.Combine(sDefaultRegKey, RegKeyName);
-        RegPath64  := TPath.Combine(sDefaultRegKey64, RegKeyName);
-        RegPathKey := 'Installed Path';
-    end else begin
-        RegPath    := TPath.Combine(sAlternateRegKey, RegKeyName);
-        RegPath64  := TPath.Combine(sAlternateRegKey64, RegKeyName);
-        RegPathKey := 'Path';
-    end;
+    RegPath := TPath.Combine(RegKeyPath, RegKeyName);
 
     with TRegistry.Create do try
-        RootKey := HKEY_LOCAL_MACHINE;
+        Access  := KEY_READ or KEY_WOW64_32KEY;
+        RootKey := RegRootKey;
 
-        if not OpenKeyReadOnly(RegPath64) then
-            if not OpenKeyReadOnly(RegPath) then begin
+        if not OpenKey(RegPath, False) then begin
+            Access := KEY_READ or KEY_WOW64_64KEY;
+            if not OpenKey(RegPath, False) then begin
                 Exit;
             end;
+        end;
 
-        DataFolderPath := StringReplace(ReadString(RegPathKey), '"', '', [rfReplaceAll]);
+        DataFolderPath := StringReplace(ReadString(RegKeyKey), '"', '', [rfReplaceAll]);
         if (DataFolderPath = '') then begin
             Exit;
         end;

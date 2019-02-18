@@ -194,7 +194,7 @@ type
 
             AdvancedSettings, ArchivePathBox, ArchiveSettings,
             ButtonBox, BlacklistBox, FO4PathBox, FO4VRPathBox, FO76PathBox,
-            GameModeBox, ProgramSettings, SSEPathBox, ManualPathBox,
+            GameModeBox, ProgramSettings, SSEPathBox, EnderalPathBox, ManualPathBox,
             SSEVRPathBox, TES5PathBox, DefaultGameBox: TGroupBox;
 
             SheetEditor, SheetLog, SheetPaths,
@@ -203,12 +203,12 @@ type
             SettingArchiveFlags, SettingArchivePath, SettingFileFlags,
             SettingFO4Path, SettingFO4VRPath, SettingFO76Path,
             SettingSSEPath, SettingSSEVRPath, SettingTES5Path,
-            zzFilterInput: TEdit;
+            SettingEnderalPath, zzFilterInput: TEdit;
 
             AddFilterButton, ArchiveSelectButton, FO4PathSelectButton,
             FO4VRPathSelectButton, FO76PathSelectButton, RefreshButton,
             RemoveFilterButton, ResetButton, RunButton, SelectButton,
-            SSEPathSelectButton, SSEVRPathSelectButton,
+            SSEPathSelectButton, SSEVRPathSelectButton, EnderalPathSelectButton,
             TES5PathSelectButton, RefreshINIButton: TButton;
 
             GameSelect, DefaultGameSelect: TComboBoxEx;
@@ -1220,33 +1220,33 @@ begin
     end;
 
     with AddWrapper(MasterList, 'TES5', 'Skyrim', baFO3) do begin
+        ExecutableName  := 'TESV';
         PluginName      := 'BakaFile.esm';
         PluginFile      := BakaFileTES5;
         SelectButton    := TES5PathSelectButton;
         SelectBox       := SettingTES5Path;
-        ExecutableName  := 'TESV';
         Initialize;
     end;
 
     with AddWrapper(MasterList, 'SSE', 'Skyrim Special Edition', baSSE) do begin
         ConfigFileName  := 'Skyrim';
         DataFileName    := 'Skyrim';
+        ExecutableName  := 'SkyrimSE';
         PluginName      := 'BakaFile.esl';
         PluginFile      := BakaFileSSE;
         SelectButton    := SSEPathSelectButton;
         SelectBox       := SettingSSEPath;
-        ExecutableName  := 'SkyrimSE';
         Initialize;
     end;
 
     with AddWrapper(MasterList, 'SSEVR', 'Skyrim VR', baSSE) do begin
         ConfigFileName  := 'Skyrim';
         DataFileName    := 'Skyrim';
+        ExecutableName  := 'SkyrimVR';
         PluginName      := 'BakaFile.esm';
         PluginFile      := BakaFileSSEVR;
         SelectButton    := SSEVRPathSelectButton;
         SelectBox       := SettingSSEVRPath;
-        ExecutableName  := 'SkyrimVR';
         Initialize;
     end;
 
@@ -1273,18 +1273,32 @@ begin
     end;
 
     with AddWrapper(MasterList, 'FO76', 'Fallout 76', baFO4, True) do begin
-        ConfigFolderName := 'Fallout 76';
-        RegKeyName       := 'Fallout 76';
-        ConfigFileName   := 'Fallout76';
         AppDataName      := 'Fallout76';
         DataFileName     := 'SeventySix';
+        ExecutableName   := 'Fallout76';
+        ConfigFileName   := 'Fallout76';
+        ConfigFolderName := 'Fallout 76';
+        RegKeyName       := 'Fallout 76';
+        RegKeyPath       := sUninstallRegKey;
+        RegKeyKey        := 'Path';
         PluginName       := 'BakaFile.esm';
         PluginFile       := BakaFileFO76;
         ConfigFile       := BakaCfgFO76;
         SelectButton     := FO76PathSelectButton;
         SelectBox        := SettingFO76Path;
-        ExecutableName   := 'Fallout76';
-        isAlternativeRegPath := True;
+        Initialize;
+    end;
+
+    with AddWrapper(MasterList, 'Enderal', 'Enderal', baFO3) do begin
+        DataFileName    := 'Skyrim';
+        ExecutableName  := 'TESV';
+        PluginName      := 'BakaFile.esm';
+        PluginFile      := BakaFileTES5;
+        RegKeyPath      := sSureAIRegKey;
+        RegKeyKey       := 'Install_Path';
+        RegRootKey      := HKEY_CURRENT_USER;
+        SelectButton    := EnderalPathSelectButton;
+        SelectBox       := SettingEnderalPath;
         Initialize;
     end;
 end;

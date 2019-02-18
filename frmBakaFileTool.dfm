@@ -33,12 +33,8 @@ object BakaWindow: TBakaWindow
     TabOrder = 0
     TabPosition = tpBottom
     TabStop = False
-    ExplicitWidth = 635
-    ExplicitHeight = 300
     object SheetEditor: TTabSheet
       Caption = 'Tool'
-      ExplicitWidth = 627
-      ExplicitHeight = 274
       DesignSize = (
         727
         314)
@@ -59,7 +55,6 @@ object BakaWindow: TBakaWindow
         TabOrder = 0
         WantReturns = False
         WordWrap = False
-        ExplicitWidth = 615
       end
       object FileListBox: TMemo
         Left = 160
@@ -174,8 +169,6 @@ object BakaWindow: TBakaWindow
     object SheetSettings: TTabSheet
       Caption = 'Settings'
       ImageIndex = 1
-      ExplicitWidth = 627
-      ExplicitHeight = 274
       DesignSize = (
         727
         314)
@@ -234,7 +227,7 @@ object BakaWindow: TBakaWindow
           Left = 10
           Top = 66
           Width = 160
-          Height = 23
+          Height = 21
           Hint = 
             'Override archive flags with a hex value. Skyrim LE archives only' +
             '.'
@@ -253,7 +246,7 @@ object BakaWindow: TBakaWindow
           Left = 10
           Top = 106
           Width = 160
-          Height = 23
+          Height = 21
           Hint = 'Override file flags with a hex value. Skyrim LE archives only.'
           TabStop = False
           Enabled = False
@@ -382,7 +375,6 @@ object BakaWindow: TBakaWindow
           TabOrder = 6
           TabStop = False
           OnClick = ResetButtonClick
-          ExplicitTop = 230
         end
         object SettingAutoScroll: TCheckBox
           Left = 10
@@ -413,8 +405,6 @@ object BakaWindow: TBakaWindow
         Anchors = [akLeft, akTop, akRight, akBottom]
         Caption = ' User Blacklist '
         TabOrder = 2
-        ExplicitWidth = 240
-        ExplicitHeight = 265
         DesignSize = (
           340
           305)
@@ -434,8 +424,6 @@ object BakaWindow: TBakaWindow
           ParentFont = False
           Sorted = True
           TabOrder = 0
-          ExplicitWidth = 220
-          ExplicitHeight = 200
         end
         object zzFilterInput: TEdit
           Left = 70
@@ -451,8 +439,6 @@ object BakaWindow: TBakaWindow
           Font.Style = []
           ParentFont = False
           TabOrder = 1
-          ExplicitTop = 231
-          ExplicitWidth = 160
         end
         object AddFilterButton: TButton
           Left = 9
@@ -464,7 +450,6 @@ object BakaWindow: TBakaWindow
           TabOrder = 2
           TabStop = False
           OnClick = AddFilterButtonClick
-          ExplicitTop = 230
         end
         object RemoveFilterButton: TButton
           Left = 39
@@ -476,7 +461,6 @@ object BakaWindow: TBakaWindow
           TabOrder = 3
           TabStop = False
           OnClick = RemoveFilterButtonClick
-          ExplicitTop = 230
         end
       end
       object ArchiveSettings: TGroupBox
@@ -555,8 +539,6 @@ object BakaWindow: TBakaWindow
         BevelOuter = bvNone
         TabOrder = 1
         Visible = False
-        ExplicitWidth = 621
-        ExplicitHeight = 525
         DesignSize = (
           721
           565)
@@ -619,8 +601,6 @@ object BakaWindow: TBakaWindow
     object SheetPaths: TTabSheet
       Caption = 'Paths'
       ImageIndex = 3
-      ExplicitWidth = 627
-      ExplicitHeight = 274
       DesignSize = (
         727
         314)
@@ -638,8 +618,6 @@ object BakaWindow: TBakaWindow
         TabOrder = 1
         OnMouseWheel = GamePathBoxMouseWheel
         OnResize = GamePathBoxResize
-        ExplicitWidth = 619
-        ExplicitHeight = 200
         DesignSize = (
           702
           240)
@@ -651,7 +629,6 @@ object BakaWindow: TBakaWindow
           Anchors = [akLeft, akTop, akRight]
           Caption = ' Fallout 76 Path '
           TabOrder = 1
-          ExplicitWidth = 595
           DesignSize = (
             695
             60)
@@ -680,7 +657,6 @@ object BakaWindow: TBakaWindow
             ParentFont = False
             ReadOnly = True
             TabOrder = 1
-            ExplicitWidth = 440
           end
         end
         object FO4PathBox: TGroupBox
@@ -691,7 +667,6 @@ object BakaWindow: TBakaWindow
           Anchors = [akLeft, akTop, akRight]
           Caption = ' Fallout 4 Path '
           TabOrder = 0
-          ExplicitWidth = 595
           DesignSize = (
             695
             60)
@@ -720,7 +695,6 @@ object BakaWindow: TBakaWindow
             ParentFont = False
             ReadOnly = True
             TabOrder = 1
-            ExplicitWidth = 440
           end
         end
         object SSEPathBox: TGroupBox
@@ -731,7 +705,6 @@ object BakaWindow: TBakaWindow
           Anchors = [akLeft, akTop, akRight]
           Caption = ' Skyrim Special Edition Path '
           TabOrder = 2
-          ExplicitWidth = 595
           DesignSize = (
             695
             60)
@@ -760,7 +733,6 @@ object BakaWindow: TBakaWindow
             ParentFont = False
             ReadOnly = True
             TabOrder = 1
-            ExplicitWidth = 440
           end
         end
         object FO4VRPathBox: TGroupBox
@@ -771,7 +743,6 @@ object BakaWindow: TBakaWindow
           Anchors = [akLeft, akTop, akRight]
           Caption = ' Fallout 4 VR Path '
           TabOrder = 3
-          ExplicitWidth = 595
           DesignSize = (
             695
             60)
@@ -800,7 +771,6 @@ object BakaWindow: TBakaWindow
             ParentFont = False
             ReadOnly = True
             TabOrder = 1
-            ExplicitWidth = 440
           end
         end
         object SSEVRPathBox: TGroupBox
@@ -811,7 +781,6 @@ object BakaWindow: TBakaWindow
           Anchors = [akLeft, akTop, akRight]
           Caption = ' Skyrim VR Path '
           TabOrder = 4
-          ExplicitWidth = 595
           DesignSize = (
             695
             60)
@@ -840,7 +809,6 @@ object BakaWindow: TBakaWindow
             ParentFont = False
             ReadOnly = True
             TabOrder = 1
-            ExplicitWidth = 440
           end
         end
         object TES5PathBox: TGroupBox
@@ -851,7 +819,6 @@ object BakaWindow: TBakaWindow
           Anchors = [akLeft, akTop, akRight]
           Caption = ' Skyrim (Classic) Path '
           TabOrder = 5
-          ExplicitWidth = 595
           DesignSize = (
             695
             60)
@@ -880,7 +847,44 @@ object BakaWindow: TBakaWindow
             ParentFont = False
             ReadOnly = True
             TabOrder = 1
-            ExplicitWidth = 440
+          end
+        end
+        object EnderalPathBox: TGroupBox
+          Left = 0
+          Top = 400
+          Width = 695
+          Height = 60
+          Anchors = [akLeft, akTop, akRight]
+          Caption = ' Enderal Path '
+          TabOrder = 6
+          DesignSize = (
+            695
+            60)
+          object EnderalPathSelectButton: TButton
+            Left = 10
+            Top = 20
+            Width = 130
+            Height = 25
+            Caption = 'Select Enderal Path'
+            TabOrder = 0
+            TabStop = False
+            OnClick = PathButtonClick
+          end
+          object SettingEnderalPath: TEdit
+            Left = 145
+            Top = 21
+            Width = 540
+            Height = 23
+            TabStop = False
+            Anchors = [akLeft, akTop, akRight]
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -13
+            Font.Name = 'Consolas'
+            Font.Style = []
+            ParentFont = False
+            ReadOnly = True
+            TabOrder = 1
           end
         end
       end
@@ -892,7 +896,6 @@ object BakaWindow: TBakaWindow
         Anchors = [akLeft, akTop, akRight]
         Caption = ' Archive2 Path '
         TabOrder = 0
-        ExplicitWidth = 619
         DesignSize = (
           719
           60)
@@ -921,15 +924,12 @@ object BakaWindow: TBakaWindow
           ParentFont = False
           ReadOnly = True
           TabOrder = 1
-          ExplicitWidth = 462
         end
       end
     end
     object SheetLog: TTabSheet
       Caption = 'Log'
       ImageIndex = 2
-      ExplicitWidth = 627
-      ExplicitHeight = 274
       DesignSize = (
         727
         314)
@@ -951,8 +951,6 @@ object BakaWindow: TBakaWindow
         ReadOnly = True
         ScrollBars = ssBoth
         TabOrder = 0
-        ExplicitWidth = 625
-        ExplicitHeight = 270
       end
     end
   end
@@ -965,8 +963,6 @@ object BakaWindow: TBakaWindow
       item
         Width = 50
       end>
-    ExplicitTop = 311
-    ExplicitWidth = 644
   end
   object ProgressBar: TProgressBar
     Left = 570
@@ -975,8 +971,6 @@ object BakaWindow: TBakaWindow
     Height = 20
     Anchors = [akRight, akBottom]
     TabOrder = 2
-    ExplicitLeft = 470
-    ExplicitTop = 316
   end
   object BakaFileTES5: TFileContainer
     Compressed = True

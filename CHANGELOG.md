@@ -1,3 +1,9 @@
+# 2.6.0
+### Additions
+* Enderal: Forgotton Stories standalone release support
+### Changes
+* Compiled with Delphi 10.3
+
 # 2.5.0
 ### Additions
 * Added a button to refresh BakaFile.ini without re-building any Archive files.
