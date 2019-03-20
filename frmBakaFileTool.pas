@@ -519,7 +519,7 @@ begin
     Synchronize(nil, procedure
         begin
             if BakaWindow.SettingRelativePaths.Checked then
-                BakaWindow.FileListBox.Lines.Add(Copy(NewLine, BakaWindow.thisGame.DataFolderPath.Length + 2, NewLine.Length))
+                BakaWindow.FileListBox.Lines.Add(Copy(NewLine, Succ(BakaWindow.thisGame.GetDataPath.Length), NewLine.Length))
             else BakaWindow.FileListBox.Lines.Add(NewLine);
         end
     );
